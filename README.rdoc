@@ -1,0 +1,35 @@
+= Positionable
+
+<b>Positionable</b> is a library which provides contiguous positionning capabilities to you ActiveRecord models.
+
+For more functionalities, you could also have a look at acts_as_list[https://github.com/swanandp/acts_as_list].
+
+== Installation
+
+Edit your Gemfile, and add simply the following line:
+
+<% gem 'positionable' %>
+
+== Getting Started
+
+Let's say you want to make the model +Item+ positionable.
+
+=== Create a migration
+
+First, create a migration to add the column +position+ to the table +items+:
+
+<% rails generate migration add_position_to_items position:integer %>
+
+Then, run the migration:
+
+<% rake db:migrate %>
+
+=== Setup your model
+
+Simply add the +is_positionable+ method in your ActiveRecord model:
+
+<% class Item < ActiveRecord::Base %>
+    <% is_positionable %>
+<% end %>
+
+Here you are!
