@@ -123,6 +123,46 @@ describe Positionable do
       end
     end
 
+    it "does not up the first record" do
+      folder = @folders.first
+      folder.position.should == 0
+      folder.up!
+      folder.position.should == 0
+    end
+
+    it "does not down the last record" do
+      folder = @folders.last
+      folder.position.should == @folders.size - 1
+      folder.down!
+      folder.position.should == @folders.size - 1
+    end
+
+    it "reorders the records positions after upping" do
+      middle = @folders[@folders.size / 2]
+      position = middle.position
+      previous = middle.previous
+      neXt = middle.next
+      previous.position.should == position - 1
+      neXt.position.should == position + 1
+      middle.up!
+      previous.reload.position.should == position
+      middle.position.should == position - 1
+      neXt.reload.position.should == position + 1
+    end
+
+    it "reorders the records positions after downing" do
+      middle = @folders[@folders.size / 2]
+      position = middle.position
+      previous = middle.previous
+      neXt = middle.next
+      previous.position.should == position - 1
+      neXt.position.should == position + 1
+      middle.down!
+      previous.reload.position.should == position - 1
+      middle.position.should == position + 1
+      neXt.reload.position.should == position
+    end
+
   end
 
   after do

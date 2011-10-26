@@ -47,6 +47,20 @@ module Positionable
         self.class.where("position < ?", position)
       end
 
+      def up!
+        unless first?
+          previous.update_attribute(:position, position)
+          update_attribute(:position, position - 1)
+        end
+      end
+
+      def down!
+        unless last?
+          self.next.update_attribute(:position, position)
+          update_attribute(:position, position + 1)
+        end
+      end
+
       private
 
       def move_to_end
