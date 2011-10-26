@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Philippe Guégan"]
   s.email       = ["philippe.guegan@gmail.com"]
   s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.summary     = %q(A gem for positionning your ActiveRecord models.)
+  s.description = %q(This extension provides contiguous positionning capabilities to you ActiveRecord models.)
 
   s.rubyforge_project = "positionable"
 
