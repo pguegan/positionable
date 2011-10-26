@@ -8,7 +8,7 @@ For more functionalities, you could also have a look at acts_as_list[https://git
 
 Edit your Gemfile, and add simply the following line:
 
-<% gem 'positionable' %>
+  gem 'positionable'
 
 == Getting Started
 
@@ -18,18 +18,18 @@ Let's say you want to make the model +Item+ positionable.
 
 First, create a migration to add the column +position+ to the table +items+:
 
-<% rails generate migration add_position_to_items position:integer %>
+  rails generate migration add_position_to_items position:integer
 
 Then, run the migration:
 
-<% rake db:migrate %>
+  rake db:migrate
 
 === Setup your model
 
 Simply add the +is_positionable+ method in your ActiveRecord model:
 
-<% class Item < ActiveRecord::Base %>
-    <% is_positionable %>
-<% end %>
+  class Item < ActiveRecord::Base
+    is_positionable
+  end
 
 Here you are!
