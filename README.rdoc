@@ -8,7 +8,7 @@ For more functionalities, you could also have a look at acts_as_list[https://git
 
 Edit your Gemfile, and add simply the following line:
 
-  gem 'positionable'
+  gem 'positionable', :git => "git://github.com/pguegan/positionable.git" 
 
 == Getting Started
 
