@@ -9,7 +9,7 @@ module Positionable
 
   module PositionableMethods
 
-    def is_positionable
+    def is_positionable(options = {})
       include InstanceMethods
 
       default_scope order(:position)
@@ -71,6 +71,11 @@ module Positionable
         all_next.each do |record|
           record.update_attribute(:position, record.position - 1)
         end
+      end
+
+      def init
+        @parent = options[:parent].to_s.capitalize! || self.class.to_s
+        puts @parent
       end
 
     end

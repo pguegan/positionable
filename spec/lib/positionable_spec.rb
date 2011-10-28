@@ -5,9 +5,9 @@ describe Positionable do
   describe "extension" do
 
     it "extends positionable models" do
-      folder = Folder.new
-      folder.respond_to?(:previous).should be_true
-      folder.respond_to?(:next).should be_true
+      item = Item.new
+      item.respond_to?(:previous).should be_true
+      item.respond_to?(:next).should be_true
     end
 
     it "does not extend non positionable models" do
@@ -17,14 +17,14 @@ describe Positionable do
     end
 
     it "protects the position attribute from mass assignment" do
-      folder = Folder.new(:title => "A new folder", :position => 10)
-      folder.position.should be_nil
-      folder.save!
-      folder.position.should == 0
-      folder.update_attributes( {:position => 20} )
-      folder.reload.position.should == 0
-      folder = Folder.create(:title => "Another folder", :position => 30)
-      folder.position.should == 1
+      item = Item.new(:title => "A new item", :position => 10)
+      item.position.should be_nil
+      item.save!
+      item.position.should == 0
+      item.update_attributes( {:position => 20} )
+      item.reload.position.should == 0
+      item = Item.create(:title => "Another item", :position => 30)
+      item.position.should == 1
     end
 
   end
@@ -34,11 +34,11 @@ describe Positionable do
     it "orders records by their position by default" do
       shuffle_positions = (0..9).to_a.shuffle
       shuffle_positions.each do |position|
-        folder = Folder.create(:title => "Folder at #{position}")
-        folder.update_attribute(:position, position)
+        item = Factory.create(:item)
+        item.update_attribute(:position, position)
       end
-      Folder.all.each_with_index do |folder, index|
-        folder.position.should == index
+      Item.all.each_with_index do |item, index|
+        item.position.should == index
       end
     end
 
@@ -47,126 +47,139 @@ describe Positionable do
   describe "contiguous positionning" do
 
     before do
-      @folders = Array.new
-      10.times { |n| @folders << Folder.create(:title => "Folder #{n}") }
+      @items = Array.new
+      10.times { |n| @items << Factory.create(:item) }
+      @middle = @items[@items.size / 2]
     end
 
     it "makes the position to start at zero" do
-      @folders.first.position.should == 0
+      @items.first.position.should == 0
     end
 
     it "increments position by one after creation" do
-      folder = Folder.create(:title => "Another folder")
-      folder.position.should == @folders.last.position + 1
+      item = Factory.create(:item)
+      item.position.should == @items.last.position + 1
     end
 
     it "does not exist a previous for the first record" do
-      @folders.first.previous.should be_nil
+      @items.first.previous.should be_nil
     end
 
     it "gives the previous record according to its position" do
-      @folders[1..(@folders.size - 1)].each_with_index do |folder, index|
-        folder.previous.should == @folders[index]
+      @items[1..(@items.size - 1)].each_with_index do |item, index|
+        item.previous.should == @items[index]
       end
     end
 
     it "gives all the previous records according to their positions" do
-      middle = @folders.size / 2
-      folder = @folders[middle]
-      folder.all_previous.size.should == @folders.size - middle
-      folder.all_previous.each_with_index do |previous, index|
-        previous.should == @folders[index]
+      @middle.all_previous.size.should == @items.size - @middle.position
+      @middle.all_previous.each_with_index do |previous, index|
+        previous.should == @items[index]
       end
     end
 
     it "does not exist a next for the last record" do
-      @folders.last.next.should be_nil
+      @items.last.next.should be_nil
     end
 
     it "gives the next record according to its position" do
-      @folders[0..(@folders.size - 2)].each_with_index do |folder, index|
-        folder.next.should == @folders[index + 1]
+      @items[0..(@items.size - 2)].each_with_index do |item, index|
+        item.next.should == @items[index + 1]
       end
     end
 
     it "gives all the next records according to their positions" do
-      middle = @folders.size / 2
-      folder = @folders[middle]
-      folder.all_next.size.should == @folders.size - middle - 1
-      folder.all_next.each_with_index do |neXt, index|
-        neXt.should == @folders[middle + index + 1]
+      @middle.all_next.size.should == @items.size - @middle.position - 1
+      @middle.all_next.each_with_index do |neXt, index|
+        neXt.should == @items[@middle.position + index + 1]
       end
     end
 
     it "caracterizes the first record" do
-      @folders.first.first?.should be_true
-      @folders[1..(@folders.size - 1)].each do |folder|
-        folder.first?.should be_false
+      @items.first.first?.should be_true
+      @items[1..(@items.size - 1)].each do |item|
+        item.first?.should be_false
       end
     end
 
     it "caracterizes the last record" do
-      @folders[0..(@folders.size - 2)].each do |folder|
-        folder.last?.should be_false
+      @items[0..(@items.size - 2)].each do |item|
+        item.last?.should be_false
       end
-      @folders.last.last?.should be_true
+      @items.last.last?.should be_true
     end
 
     it "decrements positions of next sibblings after deletion" do
-      middle = @folders.size / 2
-      @folders[middle].destroy
-      @folders[0..(middle - 1)].each_with_index do |folder, index|
-        folder.reload.position.should == index
+      middle = @items.size / 2
+      @middle.destroy
+      @items[0..(middle - 1)].each_with_index do |item, index|
+        item.reload.position.should == index
       end
-      @folders[(middle + 1)..(@folders.size - 1)].each_with_index do |folder, index|
-        folder.reload.position.should == middle + index
+      @items[(middle + 1)..(@items.size - 1)].each_with_index do |item, index|
+        item.reload.position.should == middle + index
       end
     end
 
     it "does not up the first record" do
-      folder = @folders.first
-      folder.position.should == 0
-      folder.up!
-      folder.position.should == 0
+      item = @items.first
+      item.position.should == 0
+      item.up!
+      item.position.should == 0
     end
 
     it "does not down the last record" do
-      folder = @folders.last
-      folder.position.should == @folders.size - 1
-      folder.down!
-      folder.position.should == @folders.size - 1
+      item = @items.last
+      item.position.should == @items.size - 1
+      item.down!
+      item.position.should == @items.size - 1
     end
 
     it "reorders the records positions after upping" do
-      middle = @folders[@folders.size / 2]
-      position = middle.position
-      previous = middle.previous
-      neXt = middle.next
+      position = @middle.position
+      previous = @middle.previous
+      neXt = @middle.next
       previous.position.should == position - 1
       neXt.position.should == position + 1
-      middle.up!
+      @middle.up!
       previous.reload.position.should == position
-      middle.position.should == position - 1
+      @middle.position.should == position - 1
       neXt.reload.position.should == position + 1
     end
 
     it "reorders the records positions after downing" do
-      middle = @folders[@folders.size / 2]
-      position = middle.position
-      previous = middle.previous
-      neXt = middle.next
+      position = @middle.position
+      previous = @middle.previous
+      neXt = @middle.next
       previous.position.should == position - 1
       neXt.position.should == position + 1
-      middle.down!
+      @middle.down!
       previous.reload.position.should == position - 1
-      middle.position.should == position + 1
+      @middle.position.should == position + 1
       neXt.reload.position.should == position
     end
 
   end
 
+  describe "grouping" do
+
+    it "orders records by their position by default" do
+      group = Factory.create(:group)
+      shuffle_positions = (0..2).to_a.shuffle
+      shuffle_positions.each do |position|
+        sub_group = Factory.create(:sub_group, :group => group)
+        sub_group.update_attribute(:position, position)
+      end
+      group.sub_groups.all.each_with_index do |sub_group, index|
+        sub_group.position.should == index
+      end
+    end
+
+  end
+
   after do
-    Folder.delete_all
+    SubGroup.delete_all
+    Group.delete_all
+    Item.delete_all
   end
 
 end
