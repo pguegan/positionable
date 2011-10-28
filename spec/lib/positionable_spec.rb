@@ -2,6 +2,12 @@ require 'spec_helper'
 
 describe Positionable do
 
+  before do
+    SubGroup.delete_all
+    Group.delete_all
+    Item.delete_all
+  end
+
   describe "extension" do
 
     it "extends positionable models" do
@@ -47,8 +53,7 @@ describe Positionable do
   describe "contiguous positionning" do
 
     before do
-      @items = Array.new
-      10.times { |n| @items << Factory.create(:item) }
+      @items = FactoryGirl.create_list(:item, 10)
       @middle = @items[@items.size / 2]
     end
 
@@ -72,7 +77,7 @@ describe Positionable do
     end
 
     it "gives all the previous records according to their positions" do
-      @middle.all_previous.size.should == @items.size - @middle.position
+      @middle.all_previous.size.should == @middle.position
       @middle.all_previous.each_with_index do |previous, index|
         previous.should == @items[index]
       end
@@ -97,13 +102,13 @@ describe Positionable do
 
     it "caracterizes the first record" do
       @items.first.first?.should be_true
-      @items[1..(@items.size - 1)].each do |item|
+      @items.but_first.each do |item|
         item.first?.should be_false
       end
     end
 
     it "caracterizes the last record" do
-      @items[0..(@items.size - 2)].each do |item|
+      @items.but_last.each do |item|
         item.last?.should be_false
       end
       @items.last.last?.should be_true
@@ -112,10 +117,10 @@ describe Positionable do
     it "decrements positions of next sibblings after deletion" do
       middle = @items.size / 2
       @middle.destroy
-      @items[0..(middle - 1)].each_with_index do |item, index|
+      @items.before(middle).each_with_index do |item, index|
         item.reload.position.should == index
       end
-      @items[(middle + 1)..(@items.size - 1)].each_with_index do |item, index|
+      @items.after(middle).each_with_index do |item, index|
         item.reload.position.should == middle + index
       end
     end
@@ -162,24 +167,172 @@ describe Positionable do
 
   describe "grouping" do
 
+    before do
+      @groups = FactoryGirl.create_list(:group_with_sub_groups, 5)
+    end
+
     it "orders records by their position by default" do
-      group = Factory.create(:group)
-      shuffle_positions = (0..2).to_a.shuffle
-      shuffle_positions.each do |position|
-        sub_group = Factory.create(:sub_group, :group => group)
-        sub_group.update_attribute(:position, position)
-      end
-      group.sub_groups.all.each_with_index do |sub_group, index|
-        sub_group.position.should == index
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        shuffled_positions = (0..(sub_groups.size - 1)).to_a.shuffle
+        sub_groups.each_with_index do |sub_group, index|
+          sub_group.update_attribute(:position, shuffled_positions[index])
+        end
+        sub_groups = group.reload.sub_groups
+        sub_groups.each_with_index do |sub_group, index|
+          sub_group.position.should == index
+        end
       end
     end
 
-  end
+    it "makes the position to start at zero for each group" do
+      @groups.each do |group|
+        group.sub_groups.first.position.should == 0
+      end
+    end
 
-  after do
-    SubGroup.delete_all
-    Group.delete_all
-    Item.delete_all
+    it "increments position by one after creation inside a group" do
+      group = @groups.first
+      last_position = group.sub_groups.last.position
+      sub_group = Factory.create(:sub_group, :group => group)
+      sub_group.position.should == last_position + 1
+    end
+
+    it "does not exist a previous for the first record of each group" do
+      @groups.each do |group|
+        group.sub_groups.first.previous.should be_nil
+      end
+    end
+
+    it "gives the previous record of the group according to its position" do
+      @groups.each do |group|
+        group.sub_groups.but_first.each_with_index do |sub_group, index|
+          sub_group.previous.should == group.sub_groups[index]
+        end
+      end
+    end
+
+    it "gives all the previous records of the group according to their positions" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        middle = sub_groups[sub_groups.size / 2]
+        middle.all_previous.size.should == middle.position
+        middle.all_previous.each_with_index do |previous, index|
+          previous.should == sub_groups[index]
+        end
+      end
+    end
+
+    it "does not exist a next for the last record of the group" do
+      @groups.each do |group|
+        group.sub_groups.last.next.should be_nil
+      end
+    end
+
+    it "gives the next record of the group according to its position" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        sub_groups.but_last.each_with_index do |sub_group, index|
+          sub_group.next.should == sub_groups[index + 1]
+        end
+      end
+    end
+
+    it "gives all the next records of the group according to their positions" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        middle = sub_groups[sub_groups.size / 2]
+        middle.all_next.size.should == sub_groups.size - middle.position - 1
+        middle.all_next.each_with_index do |neXt, index|
+          neXt.should == sub_groups[middle.position + index + 1]
+        end
+      end
+    end
+
+    it "caracterizes the first record of the group" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        sub_groups.first.first?.should be_true
+        sub_groups.but_first.each do |sub_group|
+          sub_group.first?.should be_false
+        end
+      end
+    end
+
+    it "caracterizes the last record of the group" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        sub_groups.but_last.each do |sub_group|
+          sub_group.last?.should be_false
+        end
+        sub_groups.last.last?.should be_true
+      end
+    end
+
+    it "decrements positions of next sibblings of the group after deletion" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        middle = sub_groups.size / 2
+        sub_groups[middle].destroy
+        sub_groups.before(middle).each_with_index do |sub_group, index|
+          sub_group.reload.position.should == index
+        end
+        sub_groups.after(middle).each_with_index do |sub_group, index|
+          sub_group.reload.position.should == middle + index
+        end
+      end
+    end
+
+    it "does not up the first record of the group" do
+      @groups.each do |group|
+        sub_group = group.sub_groups.first
+        sub_group.position.should == 0
+        sub_group.up!
+        sub_group.position.should == 0
+      end
+    end
+
+    it "does not down the last record of the group" do
+      @groups.each do |group|
+        sub_group = group.sub_groups.last
+        sub_group.position.should == group.sub_groups.size - 1
+        sub_group.down!
+        sub_group.position.should == group.sub_groups.size - 1
+      end
+    end
+
+    it "reorders the records positions after upping" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        middle = sub_groups[sub_groups.size / 2]
+        position = middle.position
+        previous = middle.previous
+        neXt = middle.next
+        previous.position.should == position - 1
+        neXt.position.should == position + 1
+        middle.up!
+        previous.reload.position.should == position
+        middle.position.should == position - 1
+        neXt.reload.position.should == position + 1
+      end     
+    end
+
+    it "reorders the records positions after downing" do
+      @groups.each do |group|
+        sub_groups = group.sub_groups
+        middle = sub_groups[sub_groups.size / 2]
+        position = middle.position
+        previous = middle.previous
+        neXt = middle.next
+        previous.position.should == position - 1
+        neXt.position.should == position + 1
+        middle.down!
+        previous.reload.position.should == position - 1
+        middle.position.should == position + 1
+        neXt.reload.position.should == position
+      end
+    end
+
   end
 
 end
