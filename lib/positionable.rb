@@ -11,7 +11,7 @@ module Positionable
 
     def is_positionable(options = {})
       include InstanceMethods
-     
+
       parent_id = "#{options[:parent].to_s}_id" if options[:parent]
 
       default_scope order(:position)
@@ -24,14 +24,20 @@ module Positionable
 
       if parent_id
         class_eval <<-EOV
-          def scope_condition
+          def scoped_condition
             "#{parent_id} = " + send(:"#{parent_id}").to_s
+          end
+          def scoped_position
+            "#{parent_id} = " + send(:"#{parent_id}").to_s + " and position"
           end
         EOV
       else
         class_eval <<-EOV
-          def scope_condition
-            "1 = 1"
+          def scoped_condition
+            ""
+          end
+          def scoped_position
+            "position"
           end
         EOV
       end
@@ -44,23 +50,7 @@ module Positionable
       end
 
       def last?
-        position == self.class.where(scope_condition).size - 1
-      end
-
-      def next
-        self.class.where("#{scope_condition} and position = ?", position + 1).first
-      end
-
-      def all_next
-        self.class.where("#{scope_condition} and position > ?", position)
-      end
-
-      def previous
-        self.class.where("#{scope_condition} and position = ?", position - 1).first
-      end
-
-      def all_previous
-        self.class.where("#{scope_condition} and position < ?", position)
+        position == self.class.where(scoped_condition).size - 1
       end
 
       def up!
@@ -77,10 +67,26 @@ module Positionable
         end
       end
 
+      def next
+        self.class.where("#{scoped_position} = ?", position + 1).first
+      end
+
+      def all_next
+        self.class.where("#{scoped_position} > ?", position)
+      end
+
+      def previous
+        self.class.where("#{scoped_position} = ?", position - 1).first
+      end
+
+      def all_previous
+        self.class.where("#{scoped_position} < ?", position)
+      end
+
       private
 
       def move_to_end
-        self.position = self.class.where(scope_condition).size
+        self.position = self.class.where(scoped_condition).size
       end
 
       def decrement_all_next
@@ -94,4 +100,5 @@ module Positionable
   end
 
   ActiveRecord::Base.send(:include, Positionable)
+
 end
