@@ -1,14 +1,18 @@
-class Group < ActiveRecord::Base
-  has_many :sub_groups
+class Folder < ActiveRecord::Base
+  has_many :documents
 end
 
-class SubGroup < ActiveRecord::Base
-  belongs_to :group
-  is_positionable :parent => :group
+class Document < ActiveRecord::Base
+  belongs_to :folder
+  is_positionable :parent => :folder
 end
 
 class Item < ActiveRecord::Base
   is_positionable
+end
+
+class Stuff < ActiveRecord::Base
+  is_positionable :start => 1
 end
 
 class Dummy < ActiveRecord::Base

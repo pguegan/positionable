@@ -3,9 +3,11 @@ require 'spec_helper'
 describe Positionable do
 
   before do
-    SubGroup.delete_all
-    Group.delete_all
+    Document.delete_all
+    Folder.delete_all
     Item.delete_all
+    Stuff.delete_all
+    Dummy.delete_all
   end
 
   describe "extension" do
@@ -168,143 +170,143 @@ describe Positionable do
   describe "grouping" do
 
     before do
-      @groups = FactoryGirl.create_list(:group_with_sub_groups, 5)
+      @folders = FactoryGirl.create_list(:folder_with_documents, 5)
     end
 
     it "orders records by their position by default" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        shuffled_positions = (0..(sub_groups.size - 1)).to_a.shuffle
-        sub_groups.each_with_index do |sub_group, index|
-          sub_group.update_attribute(:position, shuffled_positions[index])
+      @folders.each do |folder|
+        documents = folder.documents
+        shuffled_positions = (0..(documents.size - 1)).to_a.shuffle
+        documents.each_with_index do |document, index|
+          document.update_attribute(:position, shuffled_positions[index])
         end
-        sub_groups = group.reload.sub_groups
-        sub_groups.each_with_index do |sub_group, index|
-          sub_group.position.should == index
-        end
-      end
-    end
-
-    it "makes the position to start at zero for each group" do
-      @groups.each do |group|
-        group.sub_groups.first.position.should == 0
-      end
-    end
-
-    it "increments position by one after creation inside a group" do
-      group = @groups.first
-      last_position = group.sub_groups.last.position
-      sub_group = Factory.create(:sub_group, :group => group)
-      sub_group.position.should == last_position + 1
-    end
-
-    it "does not exist a previous for the first record of each group" do
-      @groups.each do |group|
-        group.sub_groups.first.previous.should be_nil
-      end
-    end
-
-    it "gives the previous record of the group according to its position" do
-      @groups.each do |group|
-        group.sub_groups.but_first.each_with_index do |sub_group, index|
-          sub_group.previous.should == group.sub_groups[index]
+        documents = folder.reload.documents
+        documents.each_with_index do |document, index|
+          document.position.should == index
         end
       end
     end
 
-    it "gives all the previous records of the group according to their positions" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        middle = sub_groups[sub_groups.size / 2]
+    it "makes the position to start at zero for each folder" do
+      @folders.each do |folder|
+        folder.documents.first.position.should == 0
+      end
+    end
+
+    it "increments position by one after creation inside a folder" do
+      folder = @folders.first
+      last_position = folder.documents.last.position
+      document = Factory.create(:document, :folder => folder)
+      document.position.should == last_position + 1
+    end
+
+    it "does not exist a previous for the first record of each folder" do
+      @folders.each do |folder|
+        folder.documents.first.previous.should be_nil
+      end
+    end
+
+    it "gives the previous record of the folder according to its position" do
+      @folders.each do |folder|
+        folder.documents.but_first.each_with_index do |document, index|
+          document.previous.should == folder.documents[index]
+        end
+      end
+    end
+
+    it "gives all the previous records of the folder according to their positions" do
+      @folders.each do |folder|
+        documents = folder.documents
+        middle = documents[documents.size / 2]
         middle.all_previous.size.should == middle.position
         middle.all_previous.each_with_index do |previous, index|
-          previous.should == sub_groups[index]
+          previous.should == documents[index]
         end
       end
     end
 
-    it "does not exist a next for the last record of the group" do
-      @groups.each do |group|
-        group.sub_groups.last.next.should be_nil
+    it "does not exist a next for the last record of the folder" do
+      @folders.each do |folder|
+        folder.documents.last.next.should be_nil
       end
     end
 
-    it "gives the next record of the group according to its position" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        sub_groups.but_last.each_with_index do |sub_group, index|
-          sub_group.next.should == sub_groups[index + 1]
+    it "gives the next record of the folder according to its position" do
+      @folders.each do |folder|
+        documents = folder.documents
+        documents.but_last.each_with_index do |document, index|
+          document.next.should == documents[index + 1]
         end
       end
     end
 
-    it "gives all the next records of the group according to their positions" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        middle = sub_groups[sub_groups.size / 2]
-        middle.all_next.size.should == sub_groups.size - middle.position - 1
+    it "gives all the next records of the folder according to their positions" do
+      @folders.each do |folder|
+        documents = folder.documents
+        middle = documents[documents.size / 2]
+        middle.all_next.size.should == documents.size - middle.position - 1
         middle.all_next.each_with_index do |neXt, index|
-          neXt.should == sub_groups[middle.position + index + 1]
+          neXt.should == documents[middle.position + index + 1]
         end
       end
     end
 
-    it "caracterizes the first record of the group" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        sub_groups.first.first?.should be_true
-        sub_groups.but_first.each do |sub_group|
-          sub_group.first?.should be_false
+    it "caracterizes the first record of the folder" do
+      @folders.each do |folder|
+        documents = folder.documents
+        documents.first.first?.should be_true
+        documents.but_first.each do |document|
+          document.first?.should be_false
         end
       end
     end
 
-    it "caracterizes the last record of the group" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        sub_groups.but_last.each do |sub_group|
-          sub_group.last?.should be_false
+    it "caracterizes the last record of the folder" do
+      @folders.each do |folder|
+        documents = folder.documents
+        documents.but_last.each do |document|
+          document.last?.should be_false
         end
-        sub_groups.last.last?.should be_true
+        documents.last.last?.should be_true
       end
     end
 
-    it "decrements positions of next sibblings of the group after deletion" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        middle = sub_groups.size / 2
-        sub_groups[middle].destroy
-        sub_groups.before(middle).each_with_index do |sub_group, index|
-          sub_group.reload.position.should == index
+    it "decrements positions of next sibblings of the folder after deletion" do
+      @folders.each do |folder|
+        documents = folder.documents
+        middle = documents.size / 2
+        documents[middle].destroy
+        documents.before(middle).each_with_index do |document, index|
+          document.reload.position.should == index
         end
-        sub_groups.after(middle).each_with_index do |sub_group, index|
-          sub_group.reload.position.should == middle + index
+        documents.after(middle).each_with_index do |document, index|
+          document.reload.position.should == middle + index
         end
       end
     end
 
-    it "does not up the first record of the group" do
-      @groups.each do |group|
-        sub_group = group.sub_groups.first
-        sub_group.position.should == 0
-        sub_group.up!
-        sub_group.position.should == 0
+    it "does not up the first record of the folder" do
+      @folders.each do |folder|
+        document = folder.documents.first
+        document.position.should == 0
+        document.up!
+        document.position.should == 0
       end
     end
 
-    it "does not down the last record of the group" do
-      @groups.each do |group|
-        sub_group = group.sub_groups.last
-        sub_group.position.should == group.sub_groups.size - 1
-        sub_group.down!
-        sub_group.position.should == group.sub_groups.size - 1
+    it "does not down the last record of the folder" do
+      @folders.each do |folder|
+        document = folder.documents.last
+        document.position.should == folder.documents.size - 1
+        document.down!
+        document.position.should == folder.documents.size - 1
       end
     end
 
     it "reorders the records positions after upping" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        middle = sub_groups[sub_groups.size / 2]
+      @folders.each do |folder|
+        documents = folder.documents
+        middle = documents[documents.size / 2]
         position = middle.position
         previous = middle.previous
         neXt = middle.next
@@ -318,9 +320,9 @@ describe Positionable do
     end
 
     it "reorders the records positions after downing" do
-      @groups.each do |group|
-        sub_groups = group.sub_groups
-        middle = sub_groups[sub_groups.size / 2]
+      @folders.each do |folder|
+        documents = folder.documents
+        middle = documents[documents.size / 2]
         position = middle.position
         previous = middle.previous
         neXt = middle.next
@@ -331,6 +333,44 @@ describe Positionable do
         middle.position.should == position + 1
         neXt.reload.position.should == position
       end
+    end
+
+  end
+
+  describe "start position" do
+
+    let(:start) { 1 } # Check configuration of class Stuff in support/models.rb
+
+    it "starts at zero by default" do
+      item = Factory.create(:item)
+      item.position.should == 0
+    end
+
+    it "starts at the given position" do
+      stuff = Factory.create(:stuff)
+      stuff.position.should == start
+    end
+
+    it "increments by one the given start position" do
+      stuffs = FactoryGirl.create_list(:stuff, 5)
+      stuff = Factory.create(:stuff)
+      stuff.position.should == stuffs.size + start
+    end
+
+    it "caracterizes the first record according the start position" do
+      stuffs = FactoryGirl.create_list(:stuff, 5)
+      stuffs.first.first?.should be_true
+      stuffs.but_first.each do |stuff|
+        stuff.first?.should be_false
+      end
+    end
+
+    it "caracterizes the last record according the start position" do
+      stuffs = FactoryGirl.create_list(:stuff, 5)
+      stuffs.but_last.each do |stuff|
+        stuff.last?.should be_false
+      end
+      stuffs.last.last?.should be_true
     end
 
   end

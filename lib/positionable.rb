@@ -13,6 +13,7 @@ module Positionable
       include InstanceMethods
 
       parent_id = "#{options[:parent].to_s}_id" if options[:parent]
+      start = options[:start] || 0
 
       default_scope order(:position)
 
@@ -20,7 +21,7 @@ module Positionable
 
       before_create :move_to_end
 
-      before_destroy :decrement_all_next
+      after_destroy :decrement_all_next
 
       if parent_id
         class_eval <<-EOV
@@ -41,16 +42,25 @@ module Positionable
           end
         EOV
       end
+
+      if start
+        class_eval <<-EOV
+          def start
+            #{start}
+          end
+        EOV
+      end
+
     end
 
     module InstanceMethods
 
       def first?
-        position == 0
+        position == start
       end
 
       def last?
-        position == self.class.where(scoped_condition).size - 1
+        position == self.class.where(scoped_condition).size + start - 1
       end
 
       def up!
@@ -86,7 +96,7 @@ module Positionable
       private
 
       def move_to_end
-        self.position = self.class.where(scoped_condition).size
+        self.position = self.class.where(scoped_condition).size + start
       end
 
       def decrement_all_next

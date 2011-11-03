@@ -38,12 +38,18 @@ Maybe your items are grouped (typically with a +belongs_to+ association). In thi
 
   class Item < ActiveRecord::Base
     belongs_to :folder
-    is_positionable, :parent => :folder
+    is_positionable :parent => :folder
+  end
+
+=== Start position
+
+By default, position starts by zero. But you may want to change this at the model level, for instance by starting at one (which seems more natural for some people):
+
+  class Item < ActiveRecord::Base
+    is_positionable :start => 1
   end
 
 == Usage
-
-<em>Notice:</em> positions start at 0 (zero). A record having such a position is considered as the first record.
 
 You can change the position of your items:
 
