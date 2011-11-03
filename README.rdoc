@@ -6,7 +6,7 @@ For more functionalities, you could also have a look at acts_as_list[https://git
 
 == Installation
 
-Edit your Gemfile, and add simply the following line:
+Edit your Gemfile, and simply add the following line:
 
   gem 'positionable', :git => "git://github.com/pguegan/positionable.git" 
 
@@ -32,4 +32,33 @@ Simply add the +is_positionable+ method in your ActiveRecord model:
     is_positionable
   end
 
-Here you are!
+=== Grouping records
+
+Maybe your items are grouped (typically with a +belongs_to+ association). In this case, you'll want to restrict the position in each group by declaring the +:parent+ option:
+
+  class Item < ActiveRecord::Base
+    belongs_to :folder
+    is_positionable, :parent => :folder
+  end
+
+== Usage
+
+<em>Notice:</em> positions start at 0 (zero). A record having such a position is considered as the first record.
+
+You can change the position of your items:
+
+  item = Item.create(...) # The newly created item is set at the last position
+  item.up! # Item's position is decremented by one
+  item.down! # Item's position is incremented by one
+
+You can also get the previous or next sibbling items:
+
+  previous = item.previous
+  all_previous = item.all_previous
+  next = item.next
+  all_next = item.all_next
+
+Both first and last items can be caracterized like this:
+
+  item.first? # True if item.previous is nil
+  item.last? # True if item.next is nil
