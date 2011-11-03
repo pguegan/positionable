@@ -24,31 +24,31 @@ module Positionable
       after_destroy :decrement_all_next
 
       if parent_id
-        class_eval <<-EOV
+        class_eval <<-RUBY
           def scoped_condition
             "#{parent_id} = " + send(:"#{parent_id}").to_s
           end
           def scoped_position
             "#{parent_id} = " + send(:"#{parent_id}").to_s + " and position"
           end
-        EOV
+        RUBY
       else
-        class_eval <<-EOV
+        class_eval <<-RUBY
           def scoped_condition
             ""
           end
           def scoped_position
             "position"
           end
-        EOV
+        RUBY
       end
 
       if start
-        class_eval <<-EOV
+        class_eval <<-RUBY
           def start
             #{start}
           end
-        EOV
+        RUBY
       end
 
     end
