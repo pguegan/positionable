@@ -8,11 +8,6 @@ class Document < ActiveRecord::Base
 end
 
 class Item < ActiveRecord::Base
-  is_positionable
-end
-
-class Stuff < ActiveRecord::Base
-  is_positionable :start => 1
 end
 
 class Dummy < ActiveRecord::Base

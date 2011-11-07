@@ -19,12 +19,6 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  create_table :stuffs, :force => true do |t|
-    t.string :title
-    t.integer :position
-    t.timestamps
-  end
-
   create_table :dummies, :force => true do |t|
     t.string :title
     t.timestamps

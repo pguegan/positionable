@@ -10,16 +10,18 @@ module Positionable
   module PositionableMethods
 
     # Calling the <tt>is_positonable</tt> method in your ActiveRecord model will inject
-    # positionning capabilities. In particularn, this will guaranted your records positions
-    # to be <em>contiguous</em>, ie.: 
+    # positionning capabilities. In particular, this will guarantee your records' positions
+    # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
     # 
+    # Thus, you should always use the provided instance methods ("up!" and "down!")
     def is_positionable(options = {})
       include InstanceMethods
 
       parent_id = "#{options[:parent].to_s}_id" if options[:parent]
       start = options[:start] || 0
+      order = options[:order] || :asc
 
-      default_scope order(:position)
+      default_scope order("position #{order}")
 
       attr_protected :position
 
@@ -46,14 +48,11 @@ module Positionable
         RUBY
       end
 
-      if start
-        class_eval <<-RUBY
-          def start
-            #{start}
-          end
-        RUBY
-      end
-
+      class_eval <<-RUBY
+        def start
+          #{start}
+        end
+      RUBY
     end
 
     module InstanceMethods
@@ -65,7 +64,7 @@ module Positionable
 
       # Tells whether this record is the last one (of his group, if any).
       def last?
-        position == self.class.where(scoped_condition).size + start - 1
+        position == scoped_all.size + start - 1
       end
 
       # Swaps this record position with his previous sibbling, unless this record is the first one.
@@ -114,7 +113,11 @@ module Positionable
       end
 
       def move_to_end
-        self.position = self.class.where(scoped_condition).size + start
+        self.position = scoped_all.size + start
+      end
+
+      def move_to_start
+        increment_all
       end
 
       def decrement_all_next
@@ -123,6 +126,10 @@ module Positionable
             record.update_attribute(:position, record.position - 1)
           end
         end
+      end
+
+      def scoped_all
+        self.class.where(scoped_condition)
       end
 
     end
