@@ -61,7 +61,7 @@ It is possible to change this behaviour by setting the +order+ option as follows
 
 This way, records are always listed by descending positions order. Record that have the highest position will appears at the top.
 
-<b>Caution!</b> The semantic of +next+ or +previous+ methods remain unchanged. More precisely, even if the highest position matches with the <em>first</em> returned record, it is still considered as the <em>last</em> one. This is odd, so the semantic of some methods will certainly be modified in a further version.
+<b>Caution!</b> The semantic of +next+ or +previous+ methods remain unchanged. More precisely, even if the highest position is the position of the <em>first</em> returned record, it is still considered as the <em>last</em> one (<em>i.e.:</em> +Item.all.first.last?+ returns +true+). I know, this is odd. The semantic of these methods will certainly change in a further version.
 
 == Usage
 
