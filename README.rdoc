@@ -1,6 +1,6 @@
 = Positionable
 
-<b>Positionable</b> is a library which provides contiguous positionning capabilities to you ActiveRecord models.
+<b>Positionable</b> is a library which provides contiguous positionning capabilities to your ActiveRecord models.
 
 For more functionalities, you could also have a look at acts_as_list[https://github.com/swanandp/acts_as_list].
 
@@ -32,7 +32,7 @@ Simply add the +is_positionable+ method in your ActiveRecord model:
     is_positionable
   end
 
-=== Grouping records
+==== Grouping records
 
 Maybe your items are grouped (typically with a +belongs_to+ association). In this case, you'll want to restrict the position in each group by declaring the +:parent+ option:
 
@@ -41,13 +41,27 @@ Maybe your items are grouped (typically with a +belongs_to+ association). In thi
     is_positionable :parent => :folder
   end
 
-=== Start position
+==== Start position
 
 By default, position starts by zero. But you may want to change this at the model level, for instance by starting at one (which seems more natural for some people):
 
   class Item < ActiveRecord::Base
     is_positionable :start => 1
   end
+
+==== Ordering
+
+When a new record is created, it is inserted by default at the last (highest) position of its group. Thus, when record are listed, the newly created record will appear at the bottom.
+
+It is possible to change this behaviour by setting the <tt>order</tt> option as follows:
+
+  class Item < ActiveRecord::Base
+    is_positionable :order => :desc
+  end
+
+This way, records are always listed by descending positions order. Record that have the highest position will appears at the top.
+
+<strong>Caution!</strong> The semantic of <tt>next</tt> or <tt>previous</tt> methods remain unchanged. More precisely, even if the highest position matches with the <em>first</em> returned record, it is still considered as the <em>last</em> one. This is odd, so the semantic of some methods will certainly be modified in a further version.
 
 == Usage
 

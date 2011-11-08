@@ -1,6 +1,20 @@
 require "positionable/version"
 require 'active_record'
 
+# <b>Positionable</b> is a library which provides contiguous positionning capabilities to your
+# ActiveRecord models. This module is designed to be an ActiveRecord extension.
+#
+# Calling the <tt>is_positionable</tt> method in your ActiveRecord model will inject
+# positionning capabilities. In particular, this will guarantee your records' positions
+# to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
+#
+# You should always use the provided instance methods (<tt>up!</tt> and <tt>down!</tt>) to move
+# or reorder your records. In order to keep contiguous position integrity, it is discouraged to
+# directly assign a record's position.
+#
+# Additional methods are available to query your model: check if this the <tt>last?</tt> or
+# <tt>first?</tt> of its own group, retrieve the <tt>previous</tt> or the <tt>next</tt> records
+# according to their positions, etc.
 module Positionable
 
   def self.included(base)
@@ -9,11 +23,37 @@ module Positionable
 
   module PositionableMethods
 
-    # Calling the <tt>is_positonable</tt> method in your ActiveRecord model will inject
-    # positionning capabilities. In particular, this will guarantee your records' positions
-    # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
+    # Makes this model positionable.
     # 
-    # Thus, you should always use the provided instance methods ("up!" and "down!")
+    #   class Item < ActiveRecord::Base
+    #     is_positionable
+    #   end
+    #
+    # Maybe your items are grouped (typically with a +belongs_to+ association). In this case, 
+    # you'll want to restrict the position in each group by declaring the +:parent+ option:
+    #
+    #   class Folder < ActiveRecord::Base
+    #     has_many :items
+    #   end
+    #
+    #   class Item < ActiveRecord::Base
+    #     belongs_to :folder
+    #     is_positionable :parent => :folder
+    #   end
+    #
+    # By default, position starts by zero. But you may want to change this at the model level,
+    # for instance by starting at one (which seems more natural for some people):
+    # 
+    #   class Item < ActiveRecord::Base
+    #     is_positionable :start => 1
+    #   end
+    #
+    # To make new records to appear at first position, the default ordering can be changed as
+    # follows:
+    #
+    #   class Item < ActiveRecord::Base
+    #     is_positionable :order => :desc
+    #   end
     def is_positionable(options = {})
       include InstanceMethods
 
@@ -25,7 +65,7 @@ module Positionable
 
       attr_protected :position
 
-      before_create :move_to_end
+      before_create :move_to_bottom
       after_destroy :decrement_all_next
 
       if parent_id
@@ -81,29 +121,38 @@ module Positionable
         end
       end
 
-      # Gives the next sibbling record, whose position is right after this record.
+      # The next sibbling record, whose position is right after this record.
       def next
-        sibbling(position + 1)
+        at(position + 1)
       end
 
+      # All the next records, whose positions are greater than this record. Records
+      # are ordered by their respective positions, depending on the <tt>order</tt> option
+      # provided to <tt>is_positionable</tt>
       def all_next
         self.class.where("#{scoped_position} > ?", position)
       end
 
+      # Gives the next sibbling record, whose position is right before this record.
       def previous
-        sibbling(position - 1)
+        at(position - 1)
       end
 
+      # All the next records, whose positions are smaller than this record. Records
+      # are ordered by their respective positions, depending on the <tt>order</tt> option
+      # provided to <tt>is_positionable</tt> (ascending by default).
       def all_previous
         self.class.where("#{scoped_position} < ?", position)
       end
 
-      private
+    private
 
-      def sibbling(position)
+      # The record at the provided position.
+      def at(position)
         self.class.where("#{scoped_position} = ?", position).limit(1).first
       end
 
+      # Swaps this record's position with the other provided record.
       def swap_with(other)
         self.class.transaction do
           old_position = position
@@ -112,14 +161,12 @@ module Positionable
         end
       end
 
-      def move_to_end
+      # Moves this record at the bottom.
+      def move_to_bottom
         self.position = scoped_all.size + start
       end
 
-      def move_to_start
-        increment_all
-      end
-
+      # Decrements the position of all the next sibbling record of this record.
       def decrement_all_next
         self.class.transaction do
           all_next.each do |record|
@@ -128,6 +175,7 @@ module Positionable
         end
       end
 
+      # All the records that belong to same parent (if any) of this record (including itself).
       def scoped_all
         self.class.where(scoped_condition)
       end
