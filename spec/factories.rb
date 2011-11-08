@@ -18,8 +18,20 @@ FactoryGirl.define do
   	sequence(:title) { |n| "Document #{n}" }
   end
 
-  factory :item do
+  factory :item_default do
   	sequence(:title) { |n| "Item #{n}" }
+  end
+
+  factory :item_starting_at_one do
+    sequence(:title) { |n| "Item #{n}" }
+  end
+
+  factory :item_asc do
+    sequence(:title) { |n| "Item #{n}" }
+  end
+
+  factory :item_desc do
+    sequence(:title) { |n| "Item #{n}" }
   end
 
   factory :stuff do

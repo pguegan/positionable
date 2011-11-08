@@ -16,6 +16,7 @@ ActiveRecord::Schema.define do
   create_table :items, :force => true do |t|
     t.string :title
     t.integer :position
+    t.string :type
     t.timestamps
   end
 

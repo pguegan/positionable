@@ -11,12 +11,6 @@ describe Positionable do
 
   describe "ActiveRecord extension" do
 
-    before(:all) do
-      class Item
-        is_positionable
-      end
-    end
-
     it "does not extend non positionable models" do
       dummy = Dummy.new
       dummy.respond_to?(:previous).should be_false
@@ -24,19 +18,19 @@ describe Positionable do
     end
 
     it "extends positionable models" do
-      item = Item.new
+      item = ItemDefault.new
       item.respond_to?(:previous).should be_true
       item.respond_to?(:next).should be_true
     end
 
     it "protects the position attribute from mass assignment" do
-      item = Item.new(:title => "A new item", :position => 10)
+      item = ItemDefault.new(:title => "A new item", :position => 10)
       item.position.should be_nil
       item.save!
       item.position.should == 0
       item.update_attributes( {:position => 20} )
       item.reload.position.should == 0
-      item = Item.create(:title => "Another item", :position => 30)
+      item = ItemDefault.create(:title => "Another item", :position => 30)
       item.position.should == 1
     end
 
@@ -44,19 +38,13 @@ describe Positionable do
 
   describe "scope" do
 
-    before(:all) do
-      class Item
-        is_positionable
-      end
-    end
-
     it "orders records by their position by default" do
       shuffle_positions = (0..9).to_a.shuffle
       shuffle_positions.each do |position|
-        item = Factory.create(:item)
+        item = Factory.create(:item_default)
         item.update_attribute(:position, position)
       end
-      Item.all.each_with_index do |item, index|
+      ItemDefault.all.each_with_index do |item, index|
         item.position.should == index
       end
     end
@@ -65,13 +53,7 @@ describe Positionable do
 
   describe "contiguous positionning" do
 
-    before(:all) do
-      class Item
-        is_positionable
-      end
-    end
-
-    let!(:items) { FactoryGirl.create_list(:item, 10) }
+    let!(:items) { FactoryGirl.create_list(:item_default, 10) }
     let(:middle) { items[items.size / 2] }
 
     it "makes the position to start at zero by default" do
@@ -79,7 +61,7 @@ describe Positionable do
     end
 
     it "increments position by one after creation" do
-      item = Factory.create(:item)
+      item = Factory.create(:item_default)
       item.position.should == items.last.position + 1
     end
 
@@ -354,26 +336,20 @@ describe Positionable do
   describe "start position" do
 
     let(:start) { 1 }
-  
-    before(:all) do
-      class Item
-        is_positionable :start => 1
-      end
-    end
 
     it "starts at the given position" do
-      item = Factory.create(:item)
+      item = Factory.create(:item_starting_at_one)
       item.position.should == start
     end
 
     it "increments by one the given start position" do
-      items = FactoryGirl.create_list(:item, 5)
-      item = Factory.create(:item)
+      items = FactoryGirl.create_list(:item_starting_at_one, 5)
+      item = Factory.create(:item_starting_at_one)
       item.position.should == items.size + start
     end
 
     it "caracterizes the first record according the start position" do
-      items = FactoryGirl.create_list(:item, 5)
+      items = FactoryGirl.create_list(:item_starting_at_one, 5)
       items.first.first?.should be_true
       items.but_first.each do |item|
         item.first?.should be_false
@@ -381,7 +357,7 @@ describe Positionable do
     end
 
     it "caracterizes the last record according the start position" do
-      items = FactoryGirl.create_list(:item, 5)
+      items = FactoryGirl.create_list(:item_starting_at_one, 5)
       items.but_last.each do |item|
         item.last?.should be_false
       end
@@ -394,21 +370,15 @@ describe Positionable do
 
     describe "asc" do
 
-      before(:all) do
-        class Item
-          is_positionable :order => :asc
-        end
-      end
-
       it "appends at the last position" do
-        items = FactoryGirl.create_list(:item, 5)
-        item = Factory.create(:item)
+        items = FactoryGirl.create_list(:item_asc, 5)
+        item = Factory.create(:item_asc)
         item.position.should == items.size
       end
 
       it "orders items by ascending position" do
-        FactoryGirl.create_list(:item, 5)
-        Item.all.each_with_index do |item, index|
+        FactoryGirl.create_list(:item_asc, 5)
+        ItemAsc.all.each_with_index do |item, index|
           item.position.should == index
         end
       end
@@ -417,21 +387,15 @@ describe Positionable do
 
     describe "desc" do
 
-      before(:all) do
-        class Item
-          is_positionable :order => :desc
-        end
-      end
-
       it "appends at the last position" do
-        items = FactoryGirl.create_list(:item, 5)
-        item = Factory.create(:item)
+        items = FactoryGirl.create_list(:item_desc, 5)
+        item = Factory.create(:item_desc)
         item.position.should == items.size
       end
 
       it "orders items by descending position" do
-        items = FactoryGirl.create_list(:item, 5)
-        Item.all.each_with_index do |item, index|
+        items = FactoryGirl.create_list(:item_desc, 5)
+        ItemDesc.all.each_with_index do |item, index|
           item.position.should == items.size - index - 1
         end
       end

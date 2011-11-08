@@ -30,7 +30,7 @@ module Positionable
     #   end
     #
     # Maybe your items are grouped (typically with a +belongs_to+ association). In this case, 
-    # you'll want to restrict the position in each group by declaring the +:parent+ option:
+    # you'll want to restrict the position in each group by declaring the +:group+ option:
     #
     #   class Folder < ActiveRecord::Base
     #     has_many :items
@@ -38,7 +38,7 @@ module Positionable
     #
     #   class Item < ActiveRecord::Base
     #     belongs_to :folder
-    #     is_positionable :parent => :folder
+    #     is_positionable :group => :folder
     #   end
     #
     # By default, position starts by zero. But you may want to change this at the model level,
@@ -57,7 +57,7 @@ module Positionable
     def is_positionable(options = {})
       include InstanceMethods
 
-      parent_id = "#{options[:parent].to_s}_id" if options[:parent]
+      group_id = "#{options[:group].to_s}_id" if options[:group]
       start = options[:start] || 0
       order = options[:order] || :asc
 
@@ -68,13 +68,13 @@ module Positionable
       before_create :move_to_bottom
       after_destroy :decrement_all_next
 
-      if parent_id
+      if group_id
         class_eval <<-RUBY
           def scoped_condition
-            "#{parent_id} = " + send(:"#{parent_id}").to_s
+            "#{group_id} = " + send(:"#{group_id}").to_s
           end
           def scoped_position
-            "#{parent_id} = " + send(:"#{parent_id}").to_s + " and position"
+            "#{group_id} = " + send(:"#{group_id}").to_s + " and position"
           end
         RUBY
       else
@@ -175,7 +175,7 @@ module Positionable
         end
       end
 
-      # All the records that belong to same parent (if any) of this record (including itself).
+      # All the records that belong to same group (if any) of this record (including itself).
       def scoped_all
         self.class.where(scoped_condition)
       end

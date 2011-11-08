@@ -5,3 +5,4 @@ pkg/*
 coverage/*
 spec/*.sqlite3
 doc/
+.DS_Store
