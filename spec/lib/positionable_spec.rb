@@ -407,7 +407,7 @@ describe Positionable do
   describe "mixing options" do
 
     let!(:groups) { FactoryGirl.create_list(:group_with_complex_items, 5) }
-    let(:start) { 1 }     # Check configuration in support/models.rb
+    let(:start) { 1 } # Check configuration in support/models.rb
 
     it "manages complex items" do
       # All options are tested here (grouping, descending ordering and start position at 1)

@@ -1,6 +1,6 @@
 = Positionable
 
-[![Build Status](https://secure.travis-ci.org/pguegan/positionable.png)](http://travis-ci.org/pguegan/positionable)
+{<img src="https://secure.travis-ci.org/pguegan/positionable.png" />}[http://travis-ci.org/pguegan/positionable]
 
 <b>Positionable</b> is a library which provides contiguous positionning capabilities to your ActiveRecord models.
 
