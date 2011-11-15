@@ -13,7 +13,7 @@ require 'active_record'
 # directly assign a record's position.
 #
 # Additional methods are available to query your model: check if this the <tt>last?</tt> or
-# <tt>first?</tt> of its own group, retrieve the <tt>previous</tt> or the <tt>next</tt> records
+# <tt>first?</tt> of its own scope, retrieve the <tt>previous</tt> or the <tt>next</tt> records
 # according to their positions, etc.
 module Positionable
 
@@ -30,7 +30,7 @@ module Positionable
     #   end
     #
     # Maybe your items are grouped (typically with a +belongs_to+ association). In this case, 
-    # you'll want to restrict the position in each group by declaring the +:group+ option:
+    # you'll want to restrict the position in each group by declaring the +:scope+ option:
     #
     #   class Folder < ActiveRecord::Base
     #     has_many :items
@@ -38,7 +38,7 @@ module Positionable
     #
     #   class Item < ActiveRecord::Base
     #     belongs_to :folder
-    #     is_positionable :group => :folder
+    #     is_positionable :scope => :folder
     #   end
     #
     # By default, position starts by zero. But you may want to change this at the model level,
@@ -57,7 +57,7 @@ module Positionable
     def is_positionable(options = {})
       include InstanceMethods
 
-      group_id = "#{options[:group].to_s}_id" if options[:group]
+      scope_id = "#{options[:scope].to_s}_id" if options[:scope]
       start = options[:start] || 0
       order = options[:order] || :asc
 
@@ -68,13 +68,13 @@ module Positionable
       before_create :move_to_bottom
       after_destroy :decrement_all_next
 
-      if group_id
+      if scope_id
         class_eval <<-RUBY
           def scoped_condition
-            "#{group_id} = " + send(:"#{group_id}").to_s
+            "#{scope_id} = " + send(:"#{scope_id}").to_s
           end
           def scoped_position
-            "#{group_id} = " + send(:"#{group_id}").to_s + " and position"
+            "#{scope_id} = " + send(:"#{scope_id}").to_s + " and position"
           end
         RUBY
       else
@@ -97,12 +97,12 @@ module Positionable
 
     module InstanceMethods
 
-      # Tells whether this record is the first one (of his group, if any).
+      # Tells whether this record is the first one (of his scope, if any).
       def first?
         position == start
       end
 
-      # Tells whether this record is the last one (of his group, if any).
+      # Tells whether this record is the last one (of his scope, if any).
       def last?
         position == scoped_all.size + start - 1
       end
@@ -175,7 +175,7 @@ module Positionable
         end
       end
 
-      # All the records that belong to same group (if any) of this record (including itself).
+      # All the records that belong to same scope (if any) of this record (including itself).
       def scoped_all
         self.class.where(scoped_condition)
       end

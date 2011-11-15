@@ -13,7 +13,13 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  create_table :groups, :force => true do |t|
+    t.string :title
+    t.timestamps
+  end
+
   create_table :items, :force => true do |t|
+    t.integer :group_id # Only fot MixedItem
     t.string :title
     t.integer :position
     t.string :type

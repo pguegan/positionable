@@ -18,33 +18,33 @@ describe Positionable do
     end
 
     it "extends positionable models" do
-      item = ItemDefault.new
+      item = DefaultItem.new
       item.respond_to?(:previous).should be_true
       item.respond_to?(:next).should be_true
     end
 
     it "protects the position attribute from mass assignment" do
-      item = ItemDefault.new(:title => "A new item", :position => 10)
+      item = DefaultItem.new(:title => "A new item", :position => 10)
       item.position.should be_nil
       item.save!
       item.position.should == 0
       item.update_attributes( {:position => 20} )
       item.reload.position.should == 0
-      item = ItemDefault.create(:title => "Another item", :position => 30)
+      item = DefaultItem.create(:title => "Another item", :position => 30)
       item.position.should == 1
     end
 
   end
 
-  describe "scope" do
+  describe "ordering" do
 
     it "orders records by their position by default" do
       shuffle_positions = (0..9).to_a.shuffle
       shuffle_positions.each do |position|
-        item = Factory.create(:item_default)
+        item = Factory.create(:default_item)
         item.update_attribute(:position, position)
       end
-      ItemDefault.all.each_with_index do |item, index|
+      DefaultItem.all.each_with_index do |item, index|
         item.position.should == index
       end
     end
@@ -53,7 +53,7 @@ describe Positionable do
 
   describe "contiguous positionning" do
 
-    let!(:items) { FactoryGirl.create_list(:item_default, 10) }
+    let!(:items) { FactoryGirl.create_list(:default_item, 10) }
     let(:middle) { items[items.size / 2] }
 
     it "makes the position to start at zero by default" do
@@ -61,7 +61,7 @@ describe Positionable do
     end
 
     it "increments position by one after creation" do
-      item = Factory.create(:item_default)
+      item = Factory.create(:default_item)
       item.position.should == items.last.position + 1
     end
 
@@ -164,7 +164,7 @@ describe Positionable do
 
   end
 
-  describe "grouping" do
+  describe "scoping" do
 
     let!(:folders) { FactoryGirl.create_list(:folder_with_documents, 5) }
 
@@ -338,18 +338,18 @@ describe Positionable do
     let(:start) { 1 }
 
     it "starts at the given position" do
-      item = Factory.create(:item_starting_at_one)
+      item = Factory.create(:starting_at_one_item)
       item.position.should == start
     end
 
     it "increments by one the given start position" do
-      items = FactoryGirl.create_list(:item_starting_at_one, 5)
-      item = Factory.create(:item_starting_at_one)
+      items = FactoryGirl.create_list(:starting_at_one_item, 5)
+      item = Factory.create(:starting_at_one_item)
       item.position.should == items.size + start
     end
 
     it "caracterizes the first record according the start position" do
-      items = FactoryGirl.create_list(:item_starting_at_one, 5)
+      items = FactoryGirl.create_list(:starting_at_one_item, 5)
       items.first.first?.should be_true
       items.but_first.each do |item|
         item.first?.should be_false
@@ -357,7 +357,7 @@ describe Positionable do
     end
 
     it "caracterizes the last record according the start position" do
-      items = FactoryGirl.create_list(:item_starting_at_one, 5)
+      items = FactoryGirl.create_list(:starting_at_one_item, 5)
       items.but_last.each do |item|
         item.last?.should be_false
       end
@@ -371,14 +371,14 @@ describe Positionable do
     describe "asc" do
 
       it "appends at the last position" do
-        items = FactoryGirl.create_list(:item_asc, 5)
-        item = Factory.create(:item_asc)
+        items = FactoryGirl.create_list(:asc_item, 5)
+        item = Factory.create(:asc_item)
         item.position.should == items.size
       end
 
       it "orders items by ascending position" do
-        FactoryGirl.create_list(:item_asc, 5)
-        ItemAsc.all.each_with_index do |item, index|
+        FactoryGirl.create_list(:asc_item, 5)
+        AscItem.all.each_with_index do |item, index|
           item.position.should == index
         end
       end
@@ -388,18 +388,35 @@ describe Positionable do
     describe "desc" do
 
       it "appends at the last position" do
-        items = FactoryGirl.create_list(:item_desc, 5)
-        item = Factory.create(:item_desc)
+        items = FactoryGirl.create_list(:desc_item, 5)
+        item = Factory.create(:desc_item)
         item.position.should == items.size
       end
 
       it "orders items by descending position" do
-        items = FactoryGirl.create_list(:item_desc, 5)
-        ItemDesc.all.each_with_index do |item, index|
+        items = FactoryGirl.create_list(:desc_item, 5)
+        DescItem.all.each_with_index do |item, index|
           item.position.should == items.size - index - 1
         end
       end
 
+    end
+
+  end
+
+  describe "mixing options" do
+
+    let!(:groups) { FactoryGirl.create_list(:group_with_complex_items, 5) }
+    let(:start) { 1 }     # Check configuration in support/models.rb
+
+    it "manages complex items" do
+      # All options are tested here (grouping, descending ordering and start position at 1)
+      groups.each do |group|
+        size = group.complex_items.size
+        group.complex_items.each_with_index do |item, index|
+          item.position.should == size + start - index - 1
+        end
+      end
     end
 
   end

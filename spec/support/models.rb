@@ -4,26 +4,35 @@ end
 
 class Document < ActiveRecord::Base
   belongs_to :folder
-  is_positionable :group => :folder
+  is_positionable :scope => :folder
 end
 
 class Item < ActiveRecord::Base
 end
 
-class ItemDefault < Item
+class DefaultItem < Item
   is_positionable
 end
 
-class ItemStartingAtOne < Item
+class StartingAtOneItem < Item
   is_positionable :start => 1
 end
 
-class ItemAsc < Item
+class AscItem < Item
   is_positionable :order => :asc
 end
 
-class ItemDesc < Item
+class DescItem < Item
   is_positionable :order => :desc
+end
+
+class Group < ActiveRecord::Base
+  has_many :complex_items
+end
+
+class ComplexItem < Item
+  belongs_to :group
+  is_positionable :scope => :group, :order => :desc, :start => 1
 end
 
 class Dummy < ActiveRecord::Base

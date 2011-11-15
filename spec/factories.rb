@@ -4,11 +4,8 @@ FactoryGirl.define do
   	sequence(:title) { |n| "Folder #{n}" }
 
     factory :folder_with_documents do
-      after_build do |folder|
-        folder.documents = (1..5).map { Factory.build(:document, :folder => folder) }
-      end
       after_create do |folder|
-        folder.documents.each { |document| document.save! }
+        folder.documents = FactoryGirl.create_list(:document, 5, :folder => folder)
       end
     end
   end
@@ -18,20 +15,35 @@ FactoryGirl.define do
   	sequence(:title) { |n| "Document #{n}" }
   end
 
-  factory :item_default do
-  	sequence(:title) { |n| "Item #{n}" }
+  factory :default_item do
+  	sequence(:title) { |n| "Default Item #{n}" }
   end
 
-  factory :item_starting_at_one do
-    sequence(:title) { |n| "Item #{n}" }
+  factory :starting_at_one_item do
+    sequence(:title) { |n| "Starting At One Item #{n}" }
   end
 
-  factory :item_asc do
-    sequence(:title) { |n| "Item #{n}" }
+  factory :asc_item do
+    sequence(:title) { |n| "Asc Item #{n}" }
   end
 
-  factory :item_desc do
-    sequence(:title) { |n| "Item #{n}" }
+  factory :desc_item do
+    sequence(:title) { |n| "Desc Item #{n}" }
+  end
+
+  factory :group do
+    sequence(:title) { |n| "Group #{n}" }
+
+    factory :group_with_complex_items do
+      after_create do |group|
+        group.complex_items = FactoryGirl.create_list(:complex_item, 5, :group => group)
+      end
+    end
+  end
+
+  factory :complex_item do
+    group
+    sequence(:title) { |n| "Complex Item #{n}" }
   end
 
   factory :stuff do

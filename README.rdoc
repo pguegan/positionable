@@ -1,5 +1,7 @@
 = Positionable
 
+[![Build Status](https://secure.travis-ci.org/pguegan/positionable.png)](http://travis-ci.org/pguegan/positionable)
+
 <b>Positionable</b> is a library which provides contiguous positionning capabilities to your ActiveRecord models.
 
 For more functionalities, you could also have a look at acts_as_list[https://github.com/swanandp/acts_as_list].
@@ -34,11 +36,11 @@ Simply add the +is_positionable+ method in your ActiveRecord model:
 
 ==== Grouping records
 
-Maybe your items are grouped (typically with a +belongs_to+ association). In this case, you'll want to restrict the position in each group by declaring the +:group+ option:
+Maybe your items are grouped (typically with a +belongs_to+ association). In this case, you'll want to restrict the position in each group by declaring the +:scope+ option:
 
   class Item < ActiveRecord::Base
     belongs_to :folder
-    is_positionable :group => :folder
+    is_positionable :scope => :folder
   end
 
 ==== Start position
@@ -62,6 +64,15 @@ It is possible to change this behaviour by setting the +order+ option as follows
 This way, records are always listed by descending positions order. Record that have the highest position will appears at the top.
 
 <b>Caution!</b> The semantic of +next+ or +previous+ methods remain unchanged. More precisely, even if the highest position is the position of the <em>first</em> returned record, it is still considered as the <em>last</em> one (<em>i.e.:</em> +Item.all.first.last?+ returns +true+). I know, this is odd. The semantic of these methods will certainly change in a further version.
+
+==== Mixing options
+
+Obviously, these options are not exclusive. You are free to mix them like, for example:
+
+  class Item < ActiveRecord::Base
+    belongs_to :folder
+    is_positionable :scope => :folder, :order => :desc, :start => 1
+  end
 
 == Usage
 

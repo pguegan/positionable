@@ -2,7 +2,7 @@
 .bundle
 Gemfile.lock
 pkg/*
-coverage/*
+coverage/
 spec/*.sqlite3
 doc/
 .DS_Store
