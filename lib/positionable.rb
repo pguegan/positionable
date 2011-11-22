@@ -61,7 +61,7 @@ module Positionable
       start = options[:start] || 0
       order = options[:order] || :asc
 
-      default_scope order("position #{order}")
+      default_scope order("\"#{self.table_name}\".\"position\" #{order}")
 
       attr_protected :position
 

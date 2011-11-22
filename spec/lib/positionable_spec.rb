@@ -34,6 +34,12 @@ describe Positionable do
       item.position.should == 1
     end
 
+    it "prepends the table name in SQL 'order by' clause" do
+      sql = DefaultItem.where("1 = 1").to_sql
+      table = DefaultItem.table_name
+      sql.should include("ORDER BY \"#{table}\".\"position\"")
+    end
+
   end
 
   describe "ordering" do
