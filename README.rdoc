@@ -63,7 +63,7 @@ It is possible to change this behaviour by setting the +order+ option as follows
 
 This way, records are always listed by descending positions order. Record that have the highest position will appears at the top.
 
-<b>Caution!</b> The semantic of +next+ or +previous+ methods remain unchanged. More precisely, even if the highest position is the position of the <em>first</em> returned record, it is still considered as the <em>last</em> one (<em>i.e.:</em> +Item.all.first.last?+ returns +true+). I know, this is odd. The semantic of these methods will certainly change in a further version.
+<b>Caution!</b> The semantic of +next+ or +previous+ methods remains unchanged. More precisely, even if the highest position is the position of the <em>first</em> returned record, it is still considered as the <em>last</em> one (<em>i.e.:</em> +Item.first.last?+ returns +true+). I know, this is odd. The semantic of these methods will certainly change in a further version.
 
 ==== Mixing options
 
@@ -78,9 +78,9 @@ Obviously, these options are not exclusive. You are free to mix them like, for e
 
 You can change the position of your items:
 
-  item = Item.create(...) # The newly created item is set at the last position
-  item.up! # Item's position is decremented by one
-  item.down! # Item's position is incremented by one
+  item = Item.create(...) # The newly created item is put at the last position
+  item.up! # Item's position is swaped with the previous item
+  item.down! # Item's position is swaped with the next item
 
 You can also get the previous or next sibbling items:
 
@@ -89,7 +89,7 @@ You can also get the previous or next sibbling items:
   next = item.next
   all_next = item.all_next
 
-Both first and last items can be caracterized like this:
+Both first and last items can be caracterized:
 
   item.first? # True if item.previous is nil
   item.last? # True if item.next is nil
