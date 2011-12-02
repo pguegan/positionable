@@ -121,6 +121,18 @@ module Positionable
         end
       end
 
+      def move_to(new_position)
+        if new_position != position and range.include?(new_position)
+          if new_position < position
+            shift, records = 1, (new_position..(position - 1)).map { |p| at(p) }
+          else
+            shift, records = -1, ((position + 1)..new_position).map { |p| at(p) }
+          end
+          records.map { |record| record.update_attribute(:position, record.position + shift) }
+          update_attribute(:position, new_position)
+        end
+      end
+
       # The next sibbling record, whose position is right after this record.
       def next
         at(position + 1)
@@ -143,6 +155,14 @@ module Positionable
       # provided to <tt>is_positionable</tt> (ascending by default).
       def all_previous
         self.class.where("#{scoped_position} < ?", position)
+      end
+
+      def range
+        if new_record?
+          (start..(scoped_all.size + start))
+        else
+          (start..(scoped_all.size + start - 1))
+        end
       end
 
     private

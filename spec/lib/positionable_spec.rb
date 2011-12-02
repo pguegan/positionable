@@ -9,7 +9,7 @@ describe Positionable do
     Dummy.delete_all
   end
 
-  describe "ActiveRecord extension" do
+  context "ActiveRecord extension" do
 
     it "does not extend non positionable models" do
       dummy = Dummy.new
@@ -42,7 +42,7 @@ describe Positionable do
 
   end
 
-  describe "ordering" do
+  context "ordering" do
 
     it "orders records by their position by default" do
       shuffle_positions = (0..9).to_a.shuffle
@@ -57,7 +57,7 @@ describe Positionable do
 
   end
 
-  describe "contiguous positionning" do
+  context "contiguous positionning" do
 
     let!(:items) { FactoryGirl.create_list(:default_item, 10) }
     let(:middle) { items[items.size / 2] }
@@ -168,9 +168,72 @@ describe Positionable do
       neXt.reload.position.should == position
     end
 
+    describe "moving" do
+
+      it "also moves the previous records when moving to a lower position" do
+        old_position = middle.position
+        new_position = old_position - 3
+        middle.move_to new_position
+        (0..(new_position - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+        middle.position.should == new_position
+        (new_position..(old_position - 1)).each do |position|
+          items[position].reload.position.should == position + 1
+        end
+        ((old_position + 1)..(items.count - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+      end
+
+      it "also moves the next records when moving to a higher position" do
+        old_position = middle.position
+        new_position = old_position + 3
+        middle.move_to new_position
+        (0..(old_position - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+        middle.position.should == new_position
+        ((old_position + 1)..new_position).each do |position|
+          items[position].reload.position.should == position - 1
+        end
+        ((new_position + 1)..(items.count - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+      end
+
+      it "does not move anything if new position is before start position" do
+        lambda {
+          middle.move_to -1
+        }.should_not change(middle, :position)
+      end
+
+      it "does not move anything if new position is out of range" do
+        lambda {
+          middle.move_to items.count + 10
+        }.should_not change(middle, :position)
+      end
+
+    end
+
   end
 
-  describe "scoping" do
+  context "range" do
+
+    let!(:items) { FactoryGirl.create_list(:default_item, 10) }
+
+    it "gives the range position of a new record" do
+      item = Factory.build(:default_item)
+      item.range.should == (0..items.count)
+    end
+
+    it "gives the range position of an existing record" do
+      items.sample.range.should == (0..(items.count - 1))
+    end    
+
+  end
+
+  context "scoping" do
 
     let!(:folders) { FactoryGirl.create_list(:folder_with_documents, 5) }
 
@@ -339,7 +402,7 @@ describe Positionable do
 
   end
 
-  describe "start position" do
+  context "start position" do
 
     let(:start) { 1 }
 
@@ -370,9 +433,21 @@ describe Positionable do
       items.last.last?.should be_true
     end
 
+    describe "moving" do
+
+      it "does not move anything if new position is before start position" do
+        items = FactoryGirl.create_list(:starting_at_one_item, 5)
+        item = items.sample
+        lambda {
+          item.move_to(start - 1)
+        }.should_not change(item, :position)
+      end
+
+    end
+
   end
 
-  describe "insertion order" do
+  context "insertion order" do
 
     describe "asc" do
 
@@ -410,7 +485,7 @@ describe Positionable do
 
   end
 
-  describe "mixing options" do
+  context "mixing options" do
 
     let!(:groups) { FactoryGirl.create_list(:group_with_complex_items, 5) }
     let(:start) { 1 } # Check configuration in support/models.rb
