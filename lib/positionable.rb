@@ -8,8 +8,8 @@ require 'active_record'
 # positionning capabilities. In particular, this will guarantee your records' positions
 # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
 #
-# You should always use the provided instance methods (<tt>up!</tt> and <tt>down!</tt>) to move
-# or reorder your records. In order to keep contiguous position integrity, it is discouraged to
+# You should always use the provided instance methods (<tt>up!</tt>, <tt>down!</tt> or <tt>move_to</tt>)
+# to move or reorder your records. In order to keep contiguous position integrity, it is discouraged to
 # directly assign a record's position.
 #
 # Additional methods are available to query your model: check if this the <tt>last?</tt> or
@@ -109,18 +109,16 @@ module Positionable
 
       # Swaps this record position with his previous sibbling, unless this record is the first one.
       def up!
-        unless first?
-          swap_with(previous)
-        end
+        swap_with(previous) unless first?
       end
 
       # Swaps this record position with his next sibbling, unless this record is the last one.
       def down!
-        unless last?
-          swap_with(self.next)
-        end
+        swap_with(self.next) unless last?
       end
 
+      # Moves this record at the given position, and updates positions of the impacted sibbling
+      # records accordingly. If the new position is out of range, then the record is not moved.
       def move_to(new_position)
         if new_position != position and range.include?(new_position)
           if new_position < position
@@ -128,8 +126,12 @@ module Positionable
           else
             shift, records = -1, ((position + 1)..new_position).map { |p| at(p) }
           end
-          records.map { |record| record.update_attribute(:position, record.position + shift) }
-          update_attribute(:position, new_position)
+          self.class.transaction do
+            # Moving sibbling
+            records.map { |record| record.update_attribute(:position, record.position + shift) }
+            # Moving self
+            update_attribute(:position, new_position)
+          end
         end
       end
 
@@ -157,17 +159,18 @@ module Positionable
         self.class.where("#{scoped_position} < ?", position)
       end
 
+      # Gives the range of available positions for this record.
       def range
         if new_record?
-          (start..(scoped_all.size + start))
+          (start..(scoped_all.count + start))
         else
-          (start..(scoped_all.size + start - 1))
+          (start..(scoped_all.count + start - 1))
         end
       end
 
     private
 
-      # The record at the provided position.
+      # Finds the record at the given position.
       def at(position)
         self.class.where("#{scoped_position} = ?", position).limit(1).first
       end
