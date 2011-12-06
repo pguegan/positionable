@@ -214,6 +214,13 @@ describe Positionable do
         }.should_not change(middle, :position)
       end
 
+      it "aliases move_to with new_position=" do
+        old_position = middle.position
+        new_position = old_position + 1
+        middle.new_position = new_position
+        middle.position.should == new_position
+      end
+
     end
 
   end
@@ -439,7 +446,7 @@ describe Positionable do
         items = FactoryGirl.create_list(:starting_at_one_item, 5)
         item = items.sample
         lambda {
-          item.move_to(start - 1)
+          item.move_to start - 1
         }.should_not change(item, :position)
       end
 

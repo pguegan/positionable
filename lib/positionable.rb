@@ -65,7 +65,7 @@ module Positionable
 
       attr_protected :position
 
-      before_create :move_to_bottom
+      before_create :add_to_bottom
       after_destroy :decrement_all_next
 
       if scope_id
@@ -104,38 +104,20 @@ module Positionable
 
       # Tells whether this record is the last one (of his scope, if any).
       def last?
-        position == scoped_all.size + start - 1
+        position == bottom
       end
 
-      # Swaps this record position with his previous sibbling, unless this record is the first one.
+      # Swaps this record position with his previous sibling, unless this record is the first one.
       def up!
         swap_with(previous) unless first?
       end
 
-      # Swaps this record position with his next sibbling, unless this record is the last one.
+      # Swaps this record position with his next sibling, unless this record is the last one.
       def down!
         swap_with(self.next) unless last?
       end
 
-      # Moves this record at the given position, and updates positions of the impacted sibbling
-      # records accordingly. If the new position is out of range, then the record is not moved.
-      def move_to(new_position)
-        if new_position != position and range.include?(new_position)
-          if new_position < position
-            shift, records = 1, (new_position..(position - 1)).map { |p| at(p) }
-          else
-            shift, records = -1, ((position + 1)..new_position).map { |p| at(p) }
-          end
-          self.class.transaction do
-            # Moving sibbling
-            records.map { |record| record.update_attribute(:position, record.position + shift) }
-            # Moving self
-            update_attribute(:position, new_position)
-          end
-        end
-      end
-
-      # The next sibbling record, whose position is right after this record.
+      # The next sibling record, whose position is right after this record.
       def next
         at(position + 1)
       end
@@ -147,7 +129,7 @@ module Positionable
         self.class.where("#{scoped_position} > ?", position)
       end
 
-      # Gives the next sibbling record, whose position is right before this record.
+      # Gives the next sibling record, whose position is right before this record.
       def previous
         at(position - 1)
       end
@@ -162,13 +144,40 @@ module Positionable
       # Gives the range of available positions for this record.
       def range
         if new_record?
-          (start..(scoped_all.count + start))
+          (start..(bottom + 1))
         else
-          (start..(scoped_all.count + start - 1))
+          (start..bottom)
         end
       end
 
+      # Moves this record at the given position, and updates positions of the impacted sibling
+      # records accordingly. If the new position is out of range, then the record is not moved.
+      def move_to(new_position)
+        if new_position != position and range.include?(new_position)
+          if new_position < position
+            shift, siblings = 1, (new_position..(position - 1)).map { |p| at(p) }
+          else
+            shift, siblings = -1, ((position + 1)..new_position).map { |p| at(p) }
+          end
+          self.class.transaction do
+            # Moving siblings
+            siblings.map do |sibling| 
+              sibling.update_attribute(:position, sibling.position + shift)
+            end
+            # Moving self
+            update_attribute(:position, new_position)
+          end
+        end
+      end
+
+      alias :new_position= :move_to
+
     private
+
+      # The position of the last record.
+      def bottom
+        scoped_all.size + start - 1
+      end
 
       # Finds the record at the given position.
       def at(position)
@@ -184,12 +193,12 @@ module Positionable
         end
       end
 
-      # Moves this record at the bottom.
-      def move_to_bottom
-        self.position = scoped_all.size + start
+      # Adds this record to the bottom.
+      def add_to_bottom
+        self.position = bottom + 1
       end
 
-      # Decrements the position of all the next sibbling record of this record.
+      # Decrements the position of all the next sibling record of this record.
       def decrement_all_next
         self.class.transaction do
           all_next.each do |record|
