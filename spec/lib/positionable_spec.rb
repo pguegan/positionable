@@ -221,6 +221,10 @@ describe Positionable do
         middle.position.should == new_position
       end
 
+      it "aliases position with new_position" do
+        middle.new_position.should == middle.position
+      end
+
     end
 
   end
@@ -448,6 +452,15 @@ describe Positionable do
         lambda {
           item.move_to start - 1
         }.should_not change(item, :position)
+      end
+
+    end
+
+    describe "range" do
+
+      it "staggers range with start position" do
+        items = FactoryGirl.create_list(:starting_at_one_item, 5)
+        items.sample.range.should == (start..(items.count + start - 1))
       end
 
     end

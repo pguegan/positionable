@@ -171,6 +171,12 @@ module Positionable
       end
 
       alias :new_position= :move_to
+      
+      # Gives the record current position.
+      # TODO Not semantically coherent.
+      def new_position
+        position
+      end
 
     private
 
