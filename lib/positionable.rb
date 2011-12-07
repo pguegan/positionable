@@ -153,6 +153,7 @@ module Positionable
       # Moves this record at the given position, and updates positions of the impacted sibling
       # records accordingly. If the new position is out of range, then the record is not moved.
       def move_to(new_position)
+        self.position ||= bottom + 1 # TODO Find a way to initialize the position after initialization (after_initialize :add_to_bottom doesn't work)
         if new_position != position and range.include?(new_position)
           if new_position < position
             shift, siblings = 1, (new_position..(position - 1)).map { |p| at(p) }
@@ -161,7 +162,7 @@ module Positionable
           end
           self.class.transaction do
             # Moving siblings
-            siblings.map do |sibling| 
+            siblings.map do |sibling|
               sibling.update_attribute(:position, sibling.position + shift)
             end
             # Moving self

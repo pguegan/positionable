@@ -34,6 +34,20 @@ describe Positionable do
       item.position.should == 1
     end
 
+    it "does not protect the new_position attribute from mass assignment" do
+      item = DefaultItem.new(:title => "A new item", :new_position => 0)
+      item.new_position.should == 0
+      item.save!
+      item.new_position.should == 0
+    end
+
+    it "also updates the position when new_position attribute is updated" do
+      item = DefaultItem.new(:title => "A new item", :new_position => 0)
+      item.position.should == 0
+      item.save!
+      item.position.should == 0
+    end
+
     it "prepends the table name in SQL 'order by' clause" do
       sql = DefaultItem.where("1 = 1").to_sql
       table = DefaultItem.table_name
