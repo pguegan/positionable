@@ -29,22 +29,20 @@ describe Positionable do
       item.save!
       item.position.should == 0
       item.update_attributes( {:position => 20} )
-      item.reload.position.should == 0
+      item.position.should == 0
       item = DefaultItem.create(:title => "Another item", :position => 30)
       item.position.should == 1
     end
 
     it "does not protect the new_position attribute from mass assignment" do
-      item = DefaultItem.new(:title => "A new item", :new_position => 0)
-      item.new_position.should == 0
-      item.save!
+      item = DefaultItem.new(:title => "A new item")
+      item.update_attributes( {:new_position => 0} )
       item.new_position.should == 0
     end
 
     it "also updates the position when new_position attribute is updated" do
-      item = DefaultItem.new(:title => "A new item", :new_position => 0)
-      item.position.should == 0
-      item.save!
+      item = DefaultItem.new(:title => "A new item")
+      item.new_position = 0
       item.position.should == 0
     end
 

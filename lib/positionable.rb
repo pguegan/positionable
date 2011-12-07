@@ -64,6 +64,7 @@ module Positionable
       default_scope order("\"#{self.table_name}\".\"position\" #{order}")
 
       attr_protected :position
+      attr_accessible :new_position
 
       before_create :add_to_bottom
       after_destroy :decrement_all_next
