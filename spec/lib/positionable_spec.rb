@@ -23,29 +23,6 @@ describe Positionable do
       item.respond_to?(:next).should be_true
     end
 
-    it "protects the position attribute from mass assignment" do
-      item = DefaultItem.new(:title => "A new item", :position => 10)
-      item.position.should be_nil
-      item.save!
-      item.position.should == 0
-      item.update_attributes( {:position => 20} )
-      item.position.should == 0
-      item = DefaultItem.create(:title => "Another item", :position => 30)
-      item.position.should == 1
-    end
-
-    it "does not protect the new_position attribute from mass assignment" do
-      item = DefaultItem.new(:title => "A new item")
-      item.update_attributes( {:new_position => 0} )
-      item.new_position.should == 0
-    end
-
-    it "also updates the position when new_position attribute is updated" do
-      item = DefaultItem.new(:title => "A new item")
-      item.new_position = 0
-      item.position.should == 0
-    end
-
     it "prepends the table name in SQL 'order by' clause" do
       sql = DefaultItem.where("1 = 1").to_sql
       table = DefaultItem.table_name
@@ -60,7 +37,7 @@ describe Positionable do
       shuffle_positions = (0..9).to_a.shuffle
       shuffle_positions.each do |position|
         item = Factory.create(:default_item)
-        item.update_attribute(:position, position)
+        item.update_column(:position, position)
       end
       DefaultItem.all.each_with_index do |item, index|
         item.position.should == index
@@ -182,6 +159,22 @@ describe Positionable do
 
     describe "moving" do
 
+      it "reorders records when position is updated via mass-assignment" do
+        old_position = middle.position
+        new_position = old_position + 3
+        middle.update_attributes({ :position => new_position })
+        (0..(old_position - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+        middle.position.should == new_position
+        ((old_position + 1)..new_position).each do |position|
+          items[position].reload.position.should == position - 1
+        end
+        ((new_position + 1)..(items.count - 1)).each do |position|
+          items[position].reload.position.should == position
+        end
+      end
+
       it "also moves the previous records when moving to a lower position" do
         old_position = middle.position
         new_position = old_position - 3
@@ -226,17 +219,6 @@ describe Positionable do
         }.should_not change(middle, :position)
       end
 
-      it "aliases move_to with new_position=" do
-        old_position = middle.position
-        new_position = old_position + 1
-        middle.new_position = new_position
-        middle.position.should == new_position
-      end
-
-      it "aliases position with new_position" do
-        middle.new_position.should == middle.position
-      end
-
     end
 
   end
@@ -265,7 +247,7 @@ describe Positionable do
         documents = folder.documents
         shuffled_positions = (0..(documents.size - 1)).to_a.shuffle
         documents.each_with_index do |document, index|
-          document.update_attribute(:position, shuffled_positions[index])
+          document.update_column(:position, shuffled_positions[index])
         end
         documents = folder.reload.documents
         documents.each_with_index do |document, index|

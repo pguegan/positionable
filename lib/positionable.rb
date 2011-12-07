@@ -8,9 +8,10 @@ require 'active_record'
 # positionning capabilities. In particular, this will guarantee your records' positions
 # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
 #
-# You should always use the provided instance methods (<tt>up!</tt>, <tt>down!</tt> or <tt>move_to</tt>)
-# to move or reorder your records. In order to keep contiguous position integrity, it is discouraged to
-# directly assign a record's position.
+# You can use the provided instance methods (<tt>up!</tt>, <tt>down!</tt> or <tt>move_to</tt>)
+# to move or reorder your records, whereas it is possible to update the position <em>via</em>
+# mass-assignement. In particular, <tt>update_attributes({:position => new_position})</tt> will
+# trigger some ActiveRecord callbacks in order to maintain positions' contiguity.
 #
 # Additional methods are available to query your model: check if this the <tt>last?</tt> or
 # <tt>first?</tt> of its own scope, retrieve the <tt>previous</tt> or the <tt>next</tt> records
@@ -63,10 +64,10 @@ module Positionable
 
       default_scope order("\"#{self.table_name}\".\"position\" #{order}")
 
-      attr_protected :position
-      attr_accessible :new_position
+      attr_accessible :position
 
       before_create :add_to_bottom
+      before_update :reorder_range
       after_destroy :decrement_all_next
 
       if scope_id
@@ -118,6 +119,15 @@ module Positionable
         swap_with(self.next) unless last?
       end
 
+      # Moves this record at the given position, and updates positions of the impacted sibling
+      # records accordingly. If the new position is out of range, then the record is not moved.
+      def move_to(new_position)
+        if range.include? new_position
+          reorder(position, new_position)
+          update_column(:position, new_position)
+        end
+      end
+
       # The next sibling record, whose position is right after this record.
       def next
         at(position + 1)
@@ -151,35 +161,6 @@ module Positionable
         end
       end
 
-      # Moves this record at the given position, and updates positions of the impacted sibling
-      # records accordingly. If the new position is out of range, then the record is not moved.
-      def move_to(new_position)
-        self.position ||= bottom + 1 # TODO Find a way to initialize the position after initialization (after_initialize :add_to_bottom doesn't work)
-        if new_position != position and range.include?(new_position)
-          if new_position < position
-            shift, siblings = 1, (new_position..(position - 1)).map { |p| at(p) }
-          else
-            shift, siblings = -1, ((position + 1)..new_position).map { |p| at(p) }
-          end
-          self.class.transaction do
-            # Moving siblings
-            siblings.map do |sibling|
-              sibling.update_attribute(:position, sibling.position + shift)
-            end
-            # Moving self
-            update_attribute(:position, new_position)
-          end
-        end
-      end
-
-      alias :new_position= :move_to
-      
-      # Gives the record current position.
-      # TODO Not semantically coherent.
-      def new_position
-        position
-      end
-
     private
 
       # The position of the last record.
@@ -201,6 +182,32 @@ module Positionable
         end
       end
 
+      # All the records that belong to same scope (if any) of this record (including itself).
+      def scoped_all
+        self.class.where(scoped_condition)
+      end
+
+      # Reorders records between provided positions, unless the destination position is out of range.
+      def reorder(from, to)
+        if from != to and range.include?(to)
+          if to < from
+            shift, siblings = 1, (to..(from - 1)).map { |p| at(p) }
+          else
+            shift, siblings = -1, ((from + 1)..to).map { |p| at(p) }
+          end
+          self.class.transaction do
+            siblings.map do |sibling|
+              sibling.update_column(:position, sibling.position + shift)
+            end
+          end
+        end
+      end
+
+      # Reorders records between old and new position.
+      def reorder_range
+        reorder(position_was, position)
+      end
+
       # Adds this record to the bottom.
       def add_to_bottom
         self.position = bottom + 1
@@ -210,14 +217,9 @@ module Positionable
       def decrement_all_next
         self.class.transaction do
           all_next.each do |record|
-            record.update_attribute(:position, record.position - 1)
+            record.update_column(:position, record.position - 1)
           end
         end
-      end
-
-      # All the records that belong to same scope (if any) of this record (including itself).
-      def scoped_all
-        self.class.where(scoped_condition)
       end
 
     end

@@ -96,10 +96,16 @@ Given a positionable item, its position is always included in a range which can 
 
 === Moving
 
-Rather than directly assign position attribute, which is highly discouraged in order to maintain contiguity, you can move your items with these provided methods:
+Rather than directly assign position attribute, you can move your items with these provided methods:
 
   item = Item.create(...)           # The newly created item is put at the last position (by default).
   item.up!                          # Item's position is swaped with the previous item.
   item.down!                        # Item's position is swaped with the next item.
   item.move_to new_position         # Moves this record to the given position, and updates sibling items positions accordingly.
   item.new_position = new_position  # Idem.
+
+Yet, it is possible to update the item's position <em>via</em> mass-assignement:
+
+  item.update_attributes { :position => new_position, ... }
+
+This will trigger some ActiveRecord callbacks in order to maintain positions contiguity across all other concerned items.
