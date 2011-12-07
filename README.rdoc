@@ -102,7 +102,6 @@ Rather than directly assign position attribute, you can move your items with the
   item.up!                          # Item's position is swaped with the previous item.
   item.down!                        # Item's position is swaped with the next item.
   item.move_to new_position         # Moves this record to the given position, and updates sibling items positions accordingly.
-  item.new_position = new_position  # Idem.
 
 Yet, it is possible to update the item's position <em>via</em> mass-assignement:
 
