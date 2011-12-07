@@ -234,7 +234,7 @@ describe Positionable do
 
     it "gives the range position of an existing record" do
       items.sample.range.should == (0..(items.count - 1))
-    end    
+    end
 
   end
 
@@ -403,6 +403,15 @@ describe Positionable do
         middle.position.should == position + 1
         neXt.reload.position.should == position
       end
+    end
+
+    describe "range" do
+
+      it "gives the range position of a new record even if it has no parent" do
+        document = Document.new
+        document.range.should == (0..0)
+      end
+
     end
 
   end

@@ -73,10 +73,20 @@ module Positionable
       if scope_id
         class_eval <<-RUBY
           def scoped_condition
-            "#{scope_id} = " + send(:"#{scope_id}").to_s
+            scope_id = send(:"#{scope_id}")
+            if scope_id
+              "#{scope_id} = " + send(:"#{scope_id}").to_s
+            else
+              "#{scope_id} is null"
+            end
           end
           def scoped_position
-            "#{scope_id} = " + send(:"#{scope_id}").to_s + " and position"
+            scope_id = send(:"#{scope_id}")
+            if scope_id
+              "#{scope_id} = " + send(:"#{scope_id}").to_s + " and position"
+            else
+              "#{scope_id} is null and position"
+            end
           end
         RUBY
       else
