@@ -44,7 +44,7 @@ Maybe your items are grouped (typically with a +belongs_to+ association). In thi
     attr_accessible :folder_id, :position
   end
 
-Note that it is the model responsibility to give the white-list of attributes that can be updated <em>via</em> mass-assignement. In this case, <strong>you must</strong> add the +position+ attribute in the +attr_accessible+ clause.
+Note that it is the model responsibility to give the white-list of attributes that can be updated <em>via</em> mass-assignement. In this case, <b>you must</b> add the +position+ attribute in the +attr_accessible+ clause.
 
 ==== Start position
 
