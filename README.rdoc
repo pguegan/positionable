@@ -41,7 +41,10 @@ Maybe your items are grouped (typically with a +belongs_to+ association). In thi
   class Item < ActiveRecord::Base
     belongs_to :folder
     is_positionable :scope => :folder
+    attr_accessible :folder_id, :position
   end
+
+Note that it is the model responsibility to give the white-list of attributes that can be updated <em>via</em> mass-assignement. In this case, <strong>you must</strong> add the +position+ attribute in the +attr_accessible+ clause.
 
 ==== Start position
 

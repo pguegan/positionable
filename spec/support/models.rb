@@ -5,7 +5,7 @@ end
 class Document < ActiveRecord::Base
   belongs_to :folder
   is_positionable :scope => :folder
-  attr_accessible :folder_id
+  attr_accessible :position, :folder_id
 end
 
 class Item < ActiveRecord::Base
@@ -34,7 +34,7 @@ end
 class ComplexItem < Item
   belongs_to :group
   is_positionable :scope => :group, :order => :desc, :start => 1
-  attr_accessible :group_id
+  attr_accessible :position, :group_id
 end
 
 class Dummy < ActiveRecord::Base

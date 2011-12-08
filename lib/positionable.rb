@@ -64,8 +64,6 @@ module Positionable
 
       default_scope order("\"#{self.table_name}\".\"position\" #{order}")
 
-      attr_accessible :position
-
       before_create :add_to_bottom
       before_update :update_position
       after_destroy :decrement_all_next
@@ -78,7 +76,7 @@ module Positionable
           def scoped_condition
             scope_id = send(:"#{scope_id}")
             if scope_id
-              "#{scope_id} = " + send(:"#{scope_id}").to_s
+              "#{scope_id} = " + scope_id.to_s
             else
               "#{scope_id} is null"
             end
@@ -86,7 +84,7 @@ module Positionable
           def scoped_position
             scope_id = send(:"#{scope_id}")
             if scope_id
-              "#{scope_id} = " + send(:"#{scope_id}").to_s + " and position"
+              "#{scope_id} = " + scope_id.to_s + " and position"
             else
               "#{scope_id} is null and position"
             end
