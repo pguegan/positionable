@@ -67,11 +67,14 @@ module Positionable
       attr_accessible :position
 
       before_create :add_to_bottom
-      before_update :reorder_range
+      before_update :update_position
       after_destroy :decrement_all_next
 
       if scope_id
         class_eval <<-RUBY
+          def scope_changed?
+            send(:"#{scope_id}_changed?")
+          end
           def scoped_condition
             scope_id = send(:"#{scope_id}")
             if scope_id
@@ -91,6 +94,9 @@ module Positionable
         RUBY
       else
         class_eval <<-RUBY
+          def scope_changed?
+            false
+          end
           def scoped_condition
             ""
           end
@@ -199,23 +205,31 @@ module Positionable
 
       # Reorders records between provided positions, unless the destination position is out of range.
       def reorder(from, to)
-        if from != to and range.include?(to)
-          if to < from
-            shift, siblings = 1, (to..(from - 1)).map { |p| at(p) }
-          else
-            shift, siblings = -1, ((from + 1)..to).map { |p| at(p) }
-          end
-          self.class.transaction do
-            siblings.map do |sibling|
-              sibling.update_column(:position, sibling.position + shift)
-            end
+        if to > from
+          shift, siblings = -1, ((from + 1)..to).map { |p| at(p) }
+        elsif scope_changed?
+          # When scope changes, it actually inserts this record in the new scope
+          # All next siblings (from new position to bottom) have to be staggered
+          shift, siblings = 1, (to..bottom).map { |p| at(p) }
+        else
+          shift, siblings = 1, (to..(from - 1)).map { |p| at(p) }
+        end
+        self.class.transaction do
+          siblings.map do |sibling|
+            sibling.update_column(:position, sibling.position + shift)
           end
         end
       end
 
       # Reorders records between old and new position.
-      def reorder_range
-        reorder(position_was, position)
+      def update_position
+        if range.include?(position)
+          reorder(position_was, position)
+        elsif scope_changed?
+          add_to_bottom # Ignore the original position
+        else
+          self.position = position_was # Keep original position
+        end
       end
 
       # Adds this record to the bottom.

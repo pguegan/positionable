@@ -1,5 +1,7 @@
 require 'simplecov'
-SimpleCov.start
+SimpleCov.start do
+  add_filter "/spec/support/"
+end
 
 require 'factory_girl'
 FactoryGirl.find_definitions
@@ -10,6 +12,7 @@ ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => File
 
 load File.dirname(__FILE__) + '/support/schema.rb'
 load File.dirname(__FILE__) + '/support/models.rb'
+load File.dirname(__FILE__) + '/support/matchers/contiguity_matcher.rb'
 
 class Array
 

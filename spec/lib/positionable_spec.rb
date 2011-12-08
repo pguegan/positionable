@@ -39,9 +39,7 @@ describe Positionable do
         item = Factory.create(:default_item)
         item.update_column(:position, position)
       end
-      DefaultItem.all.each_with_index do |item, index|
-        item.position.should == index
-      end
+      DefaultItem.all.should be_contiguous
     end
 
   end
@@ -111,24 +109,20 @@ describe Positionable do
     it "decrements positions of next sibblings after deletion" do
       position = items.size / 2
       middle.destroy
-      items.before(position).each_with_index do |item, index|
-        item.reload.position.should == index
-      end
-      items.after(position).each_with_index do |item, index|
-        item.reload.position.should == position + index
-      end
+      items.before(position).should be_contiguous
+      items.after(position).should be_contiguous.starting_at(position)
     end
 
     it "does not up the first record" do
       item = items.first
-      item.position.should == 0
+      item.position.should == 0 # Meta!
       item.up!
       item.position.should == 0
     end
 
     it "does not down the last record" do
       item = items.last
-      item.position.should == items.size - 1
+      item.position.should == items.size - 1 # Meta!
       item.down!
       item.position.should == items.size - 1
     end
@@ -137,8 +131,8 @@ describe Positionable do
       position = middle.position
       previous = middle.previous
       neXt = middle.next
-      previous.position.should == position - 1
-      neXt.position.should == position + 1
+      previous.position.should == position - 1 # Meta!
+      neXt.position.should == position + 1 # Meta!
       middle.up!
       previous.reload.position.should == position
       middle.position.should == position - 1
@@ -149,8 +143,8 @@ describe Positionable do
       position = middle.position
       previous = middle.previous
       neXt = middle.next
-      previous.position.should == position - 1
-      neXt.position.should == position + 1
+      previous.position.should == position - 1 # Meta!
+      neXt.position.should == position + 1 # Meta!
       middle.down!
       previous.reload.position.should == position - 1
       middle.position.should == position + 1
@@ -159,20 +153,34 @@ describe Positionable do
 
     describe "moving" do
 
-      it "reorders records when position is updated via mass-assignment" do
-        old_position = middle.position
-        new_position = old_position + 3
-        middle.update_attributes({ :position => new_position })
-        (0..(old_position - 1)).each do |position|
-          items[position].reload.position.should == position
+      context "mass-assignement" do
+        
+        it "reorders records when position is updated" do
+          old_position = middle.position
+          new_position = old_position + 3
+          middle.update_attributes({ :position => new_position })
+          (0..(old_position - 1)).each do |position|
+            items[position].reload.position.should == position
+          end
+          middle.position.should == new_position
+          ((old_position + 1)..new_position).each do |position|
+            items[position].reload.position.should == position - 1
+          end
+          ((new_position + 1)..(items.count - 1)).each do |position|
+            items[position].reload.position.should == position
+          end
         end
-        middle.position.should == new_position
-        ((old_position + 1)..new_position).each do |position|
-          items[position].reload.position.should == position - 1
+
+        it "does not reorder anything when position is updated but out of range" do
+          middle.update_attributes({ :position => items.count + 10 })
+          items.should be_contiguous
         end
-        ((new_position + 1)..(items.count - 1)).each do |position|
-          items[position].reload.position.should == position
+
+        it "does not reorder anything when position is updated but before start" do
+          middle.update_attributes({ :position => -1 })
+          items.should be_contiguous
         end
+      
       end
 
       it "also moves the previous records when moving to a lower position" do
@@ -220,7 +228,24 @@ describe Positionable do
       end
 
     end
+=begin
+    describe "inserting" do
 
+      it "inserts the record at the specified position" do
+        item = Factory.create(:default_item)
+        position = middle.position
+        item.insert_at position
+        item.position.should == position
+      end
+
+      it "reorders next sibling records when inserting" do
+        item = Factory.create(:default_item)
+        item.insert_at middle.position
+        DefaultItem.all.should be_contiguous
+      end
+
+    end
+=end
   end
 
   context "range" do
@@ -250,9 +275,7 @@ describe Positionable do
           document.update_column(:position, shuffled_positions[index])
         end
         documents = folder.reload.documents
-        documents.each_with_index do |document, index|
-          document.position.should == index
-        end
+        documents.should be_contiguous
       end
     end
 
@@ -314,7 +337,7 @@ describe Positionable do
       folders.each do |folder|
         documents = folder.documents
         middle = documents[documents.size / 2]
-        middle.all_next.size.should == documents.size - middle.position - 1
+        middle.all_next.count.should == documents.count - middle.position - 1
         middle.all_next.each_with_index do |neXt, index|
           neXt.should == documents[middle.position + index + 1]
         end
@@ -346,19 +369,15 @@ describe Positionable do
         documents = folder.documents
         middle = documents.size / 2
         documents[middle].destroy
-        documents.before(middle).each_with_index do |document, index|
-          document.reload.position.should == index
-        end
-        documents.after(middle).each_with_index do |document, index|
-          document.reload.position.should == middle + index
-        end
+        documents.before(middle).should be_contiguous
+        documents.after(middle).should be_contiguous.starting_at(middle)
       end
     end
 
     it "does not up the first record of the folder" do
       folders.each do |folder|
         document = folder.documents.first
-        document.position.should == 0
+        document.position.should == 0 # Meta!
         document.up!
         document.position.should == 0
       end
@@ -367,7 +386,7 @@ describe Positionable do
     it "does not down the last record of the folder" do
       folders.each do |folder|
         document = folder.documents.last
-        document.position.should == folder.documents.size - 1
+        document.position.should == folder.documents.size - 1 # Meta!
         document.down!
         document.position.should == folder.documents.size - 1
       end
@@ -380,8 +399,8 @@ describe Positionable do
         position = middle.position
         previous = middle.previous
         neXt = middle.next
-        previous.position.should == position - 1
-        neXt.position.should == position + 1
+        previous.position.should == position - 1 # Meta!
+        neXt.position.should == position + 1 # Meta!
         middle.up!
         previous.reload.position.should == position
         middle.position.should == position - 1
@@ -396,8 +415,8 @@ describe Positionable do
         position = middle.position
         previous = middle.previous
         neXt = middle.next
-        previous.position.should == position - 1
-        neXt.position.should == position + 1
+        previous.position.should == position - 1 # Meta!
+        neXt.position.should == position + 1 # Meta!
         middle.down!
         previous.reload.position.should == position - 1
         middle.position.should == position + 1
@@ -405,9 +424,33 @@ describe Positionable do
       end
     end
 
+    context "changing scope" do
+
+      let!(:old_folder) { folders.first }
+      let!(:document) { old_folder.documents.sample }
+      # A new folder containing a different count of documents than the old folder
+      let!(:new_folder) { Factory.create(:folder) }
+      let!(:new_documents) { FactoryGirl.create_list(:document, old_folder.documents.count + 1, :folder => new_folder) }
+
+      it "moves to bottom position when scope (parent) has changed but position is out of range" do
+        document.update_attributes( {:folder_id => new_folder.id, :position => new_documents.count + 10 } )
+        document.position.should == new_folder.documents.count - 1
+        document.last?.should be_true
+      end
+
+      it "keeps position when scope (parent) has changed but position belongs to range" do
+        position = document.position
+        document.update_attributes( {:folder_id => new_folder.id} )
+        document.position.should == position # Position unchanged
+        new_folder.reload.documents.should be_contiguous
+      end
+    
+    end
+
     describe "range" do
 
       it "gives the range position of a new record even if it has no parent" do
+        FactoryGirl.create_list(:document, 10)
         document = Document.new
         document.range.should == (0..0)
       end
@@ -499,9 +542,7 @@ describe Positionable do
 
       it "orders items by descending position" do
         items = FactoryGirl.create_list(:desc_item, 5)
-        DescItem.all.each_with_index do |item, index|
-          item.position.should == items.size - index - 1
-        end
+        DescItem.all.reverse.should be_contiguous
       end
 
     end
@@ -517,9 +558,7 @@ describe Positionable do
       # All options are tested here (grouping, descending ordering and start position at 1)
       groups.each do |group|
         size = group.complex_items.size
-        group.complex_items.each_with_index do |item, index|
-          item.position.should == size + start - index - 1
-        end
+        group.complex_items.reverse.should be_contiguous.starting_at(start)
       end
     end
 
