@@ -58,7 +58,7 @@ module Positionable
     def is_positionable(options = {})
       include InstanceMethods
 
-      scope_id = "#{options[:scope].to_s}_id" if options[:scope]
+      scope_id_attr = "#{options[:scope].to_s}_id" if options[:scope]
       start = options[:start] || 0
       order = options[:order] || :asc
 
@@ -68,39 +68,67 @@ module Positionable
       before_update :update_position
       after_destroy :decrement_all_next
 
-      if scope_id
+      if scope_id_attr
         class_eval <<-RUBY
+
+          def scope_id
+            send(:"#{scope_id_attr}")
+          end
+
+          # Gives the range of available positions for this record.
+          def range(scope = nil)
+            raise RangeWithoutScopeError if new_record? and scope.nil? and scope_id.nil?
+            # TODO To refactor...
+            local_scope_id = scope.nil? ? scope_id : scope.id
+            count = self.class.where("#{scope_id_attr} = ?", local_scope_id).count
+            if new_record? or local_scope_id != scope_id
+              (start..(count + 1))
+            else
+              (start..count)
+            end
+          end
+
+        private
+
           def scope_changed?
-            send(:"#{scope_id}_changed?")
+            send(:"#{scope_id_attr}_changed?")
           end
+
           def scoped_condition
-            scope_id = send(:"#{scope_id}")
-            if scope_id
-              "#{scope_id} = " + scope_id.to_s
-            else
-              "#{scope_id} is null"
-            end
+            "#{scope_id_attr} = " + scope_id.to_s
           end
+
           def scoped_position
-            scope_id = send(:"#{scope_id}")
-            if scope_id
-              "#{scope_id} = " + scope_id.to_s + " and position"
-            else
-              "#{scope_id} is null and position"
-            end
+            "#{scope_id_attr} = " + scope_id.to_s + " and position"
           end
+
         RUBY
       else
         class_eval <<-RUBY
+
+          # Gives the range of available positions for this record.
+          def range
+            if new_record?
+              (start..(bottom + 1))
+            else
+              (start..bottom)
+            end
+          end
+
+        private
+
           def scope_changed?
             false
           end
+
           def scoped_condition
             ""
           end
+
           def scoped_position
             "position"
           end
+
         RUBY
       end
 
@@ -164,15 +192,6 @@ module Positionable
       # provided to <tt>is_positionable</tt> (ascending by default).
       def all_previous
         self.class.where("#{scoped_position} < ?", position)
-      end
-
-      # Gives the range of available positions for this record.
-      def range
-        if new_record?
-          (start..(bottom + 1))
-        else
-          (start..bottom)
-        end
       end
 
     private
@@ -246,6 +265,9 @@ module Positionable
 
     end
 
+  end
+
+  class RangeWithoutScopeError < StandardError
   end
 
   ActiveRecord::Base.send(:include, Positionable)

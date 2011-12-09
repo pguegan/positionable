@@ -228,27 +228,10 @@ describe Positionable do
       end
 
     end
-=begin
-    describe "inserting" do
 
-      it "inserts the record at the specified position" do
-        item = Factory.create(:default_item)
-        position = middle.position
-        item.insert_at position
-        item.position.should == position
-      end
-
-      it "reorders next sibling records when inserting" do
-        item = Factory.create(:default_item)
-        item.insert_at middle.position
-        DefaultItem.all.should be_contiguous
-      end
-
-    end
-=end
   end
 
-  context "range" do
+  describe "range" do
 
     let!(:items) { FactoryGirl.create_list(:default_item, 10) }
 
@@ -449,10 +432,50 @@ describe Positionable do
 
     describe "range" do
 
-      it "gives the range position of a new record even if it has no parent" do
-        FactoryGirl.create_list(:document, 10)
-        document = Document.new
-        document.range.should == (0..0)
+      context "new record" do
+
+        it "gives a range only if the scope is specified" do
+          lambda {
+            Document.new.range
+          }.should raise_error(Positionable::RangeWithoutScopeError)
+        end
+
+        it "gives the range within a scope" do
+          folder = Factory.create(:folder_with_documents)
+          document = Document.new
+          document.range(folder).should == (0..(folder.documents.count + 1))
+        end
+
+        it "gives the range within its own scope by default" do
+          document = Factory.build(:document)
+          folder = document.folder
+          document.range.should == (0..(folder.documents.count + 1))
+        end
+
+        it "gives the range within another scope" do
+          document = Factory.build(:document)
+          folder = Factory.create(:folder_with_documents)
+          document.folder.should_not == folder # Meta!
+          document.range(folder).should == (0..(folder.documents.count + 1))
+        end
+
+      end
+
+      context "existing record" do
+
+        it "gives the range within its own scope" do
+          folder = Factory.create(:folder_with_documents)
+          document = folder.documents.sample
+          document.range(folder).should == (0..folder.documents.count)
+        end
+
+        it "gives the range within another scope" do
+          document = Factory.create(:document)
+          folder = Factory.create(:folder_with_documents)
+          document.folder.should_not == folder # Meta!
+          document.range(folder).should == (0..(folder.documents.count + 1))
+        end
+
       end
 
     end
