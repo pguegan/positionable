@@ -8,6 +8,10 @@ require 'active_record'
 # positionning capabilities. In particular, this will guarantee your records' positions
 # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
 #
+# Positionable has a strong management of records that belong to a group (a.k.a. scope). When a
+# record is moved whithin its scope, or from a scope to another, other impacted records are 
+# also reordered accordingly.
+#
 # You can use the provided instance methods (<tt>up!</tt>, <tt>down!</tt> or <tt>move_to</tt>)
 # to move or reorder your records, whereas it is possible to update the position <em>via</em>
 # mass-assignement. In particular, <tt>update_attributes({:position => new_position})</tt> will
@@ -75,13 +79,18 @@ module Positionable
             send(:"#{scope_id_attr}")
           end
 
-          # Gives the range of available positions for this record.
+          # Gives the range of available positions for this record, whithin the provided scope.
+          # If no scope is provided, then it takes the record's current scope by default.
+          # If this record is new and no scope can be retrieved, then a <tt>RangeWithoutScopeError</tt>
+          # is raised.
           def range(scope = nil)
             raise RangeWithoutScopeError if new_record? and scope.nil? and scope_id.nil?
-            # TODO To refactor...
-            local_scope_id = scope.nil? ? scope_id : scope.id
-            count = self.class.where("#{scope_id_attr} = ?", local_scope_id).count
-            if new_record? or local_scope_id != scope_id
+            # Does its best to retrieve the target scope...
+            target_scope_id = scope.nil? ? scope_id : scope.id
+            # Number of records whithin the target scope
+            count = self.class.where("#{scope_id_attr} = ?", target_scope_id).count
+            # An additional position is available if this record is new, or if it's moved to another scope
+            if new_record? or target_scope_id != scope_id
               (start..(count + 1))
             else
               (start..count)
@@ -90,16 +99,28 @@ module Positionable
 
         private
 
-          def scope_changed?
-            send(:"#{scope_id_attr}_changed?")
-          end
-
           def scoped_condition
             "#{scope_id_attr} = " + scope_id.to_s
           end
 
           def scoped_position
-            "#{scope_id_attr} = " + scope_id.to_s + " and position"
+            scoped_condition + " and position"
+          end
+
+          def scope_changed?
+            send(:"#{scope_id_attr}_changed?")
+          end
+
+          def scope_id_was
+            send(:"#{scope_id_attr}_was")
+          end
+
+          def scoped_condition_was
+            "#{scope_id_attr} = " + scope_id_was.to_s
+          end
+
+          def scoped_position_was
+            scoped_condition_was + " and position"
           end
 
         RUBY
@@ -177,9 +198,15 @@ module Positionable
 
       # All the next records, whose positions are greater than this record. Records
       # are ordered by their respective positions, depending on the <tt>order</tt> option
-      # provided to <tt>is_positionable</tt>
+      # provided to <tt>is_positionable</tt>.
       def all_next
         self.class.where("#{scoped_position} > ?", position)
+      end
+
+      # All the next records <em>of the old scope</em>, whose positions are greater 
+      # than this record before it was moved from its old record.
+      def all_next_was
+        self.class.where("#{scoped_position_was} > ?", position_was)
       end
 
       # Gives the next sibling record, whose position is right before this record.
@@ -238,14 +265,21 @@ module Positionable
         end
       end
 
-      # Reorders records between old and new position.
+      # Reorders records between old and new position (and old and new scope).
       def update_position
-        if range.include?(position)
-          reorder(position_was, position)
-        elsif scope_changed?
-          add_to_bottom # Ignore the original position
+        if scope_changed?
+          decrement(all_next_was)
+          if range.include?(position)
+            reorder(position_was, position)
+          else
+            add_to_bottom
+          end
         else
-          self.position = position_was # Keep original position
+          if range.include?(position)
+            reorder(position_was, position)
+          else
+            self.position = position_was # Keep original position
+          end
         end
       end
 
@@ -254,10 +288,15 @@ module Positionable
         self.position = bottom + 1
       end
 
-      # Decrements the position of all the next sibling record of this record.
+      # Decrements the position of all the next sibling records of this record.
       def decrement_all_next
+        decrement(all_next)
+      end
+
+      # Decrements the position of all the provided records.
+      def decrement(records)
         self.class.transaction do
-          all_next.each do |record|
+          records.each do |record|
             record.update_column(:position, record.position - 1)
           end
         end

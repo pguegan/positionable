@@ -110,4 +110,4 @@ Yet, it is possible to update the item's position <em>via</em> mass-assignement:
 
   item.update_attributes { :position => new_position, ... }
 
-This will trigger some ActiveRecord callbacks in order to maintain positions contiguity across all other concerned items.
+This will trigger some ActiveRecord callbacks in order to maintain positions contiguity across all other concerned items, even if the item is moved from a scope to another.

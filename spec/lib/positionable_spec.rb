@@ -410,24 +410,30 @@ describe Positionable do
     context "changing scope" do
 
       let!(:old_folder) { folders.first }
-      let!(:document) { old_folder.documents.sample }
+      # Last document is a special case when changing scope, so it is avoided
+      let!(:document) { old_folder.documents.but_last.sample }
       # A new folder containing a different count of documents than the old folder
       let!(:new_folder) { Factory.create(:folder) }
       let!(:new_documents) { FactoryGirl.create_list(:document, old_folder.documents.count + 1, :folder => new_folder) }
 
-      it "moves to bottom position when scope (parent) has changed but position is out of range" do
+      it "moves to bottom position when scope has changed but position is out of range" do
         document.update_attributes( {:folder_id => new_folder.id, :position => new_documents.count + 10 } )
         document.position.should == new_folder.documents.count - 1
         document.last?.should be_true
       end
 
-      it "keeps position when scope (parent) has changed but position belongs to range" do
+      it "keeps position when scope has changed but position belongs to range" do
         position = document.position
         document.update_attributes( {:folder_id => new_folder.id} )
         document.position.should == position # Position unchanged
         new_folder.reload.documents.should be_contiguous
       end
-    
+
+      it "reorders records of previous scope" do
+        document.update_attributes( {:folder_id => new_folder.id} )
+        old_folder.reload.documents.should be_contiguous
+      end
+
     end
 
     describe "range" do

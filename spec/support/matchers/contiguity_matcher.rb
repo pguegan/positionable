@@ -1,3 +1,6 @@
+# Usage examples:
+#   folder.documents.should be_contiguous
+#   folder.documents.should be_contiguous.starting_at(1)
 RSpec::Matchers.define :be_contiguous do
 
   match do |array|
