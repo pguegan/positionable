@@ -97,6 +97,10 @@ Given a positionable item, its position is always included in a range which can 
 
   item.range
 
+If this item is aimed at being moved to another different scope, then you can pass this new scope as a parameter:
+
+  item.range(folder)
+
 === Moving
 
 Rather than directly assign position attribute, you can move your items with these provided methods:
