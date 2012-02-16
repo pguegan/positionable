@@ -21,6 +21,7 @@ RSpec::Matchers.define :be_contiguous do
       message << " [#{current.id}, #{current.position}]"
     end
     message << " would be contiguous"
+    message << " (starting at #{@start})" if @start > 0
   end
 
 end

@@ -39,7 +39,7 @@ describe Positionable do
         item = Factory.create(:default_item)
         item.update_column(:position, position)
       end
-      DefaultItem.all.should be_contiguous
+      DefaultItem.all.should be_contiguous.starting_at(0)
     end
 
   end
@@ -109,7 +109,7 @@ describe Positionable do
     it "decrements positions of next sibblings after deletion" do
       position = items.size / 2
       middle.destroy
-      items.before(position).should be_contiguous
+      items.before(position).should be_contiguous.starting_at(0)
       items.after(position).should be_contiguous.starting_at(position)
     end
 
@@ -173,12 +173,12 @@ describe Positionable do
 
         it "does not reorder anything when position is updated but out of range" do
           middle.update_attributes({ :position => items.count + 10 })
-          items.should be_contiguous
+          items.should be_contiguous.starting_at(0)
         end
 
         it "does not reorder anything when position is updated but before start" do
           middle.update_attributes({ :position => -1 })
-          items.should be_contiguous
+          items.should be_contiguous.starting_at(0)
         end
       
       end
@@ -258,7 +258,7 @@ describe Positionable do
           document.update_column(:position, shuffled_positions[index])
         end
         documents = folder.reload.documents
-        documents.should be_contiguous
+        documents.should be_contiguous.starting_at(0)
       end
     end
 
@@ -352,7 +352,7 @@ describe Positionable do
         documents = folder.documents
         middle = documents.size / 2
         documents[middle].destroy
-        documents.before(middle).should be_contiguous
+        documents.before(middle).should be_contiguous.starting_at(0)
         documents.after(middle).should be_contiguous.starting_at(middle)
       end
     end
@@ -361,8 +361,9 @@ describe Positionable do
       folders.each do |folder|
         document = folder.documents.first
         document.position.should == 0 # Meta!
-        document.up!
-        document.position.should == 0
+        lambda {
+          document.up!
+        }.should_not change(document, :position)
       end
     end
 
@@ -370,8 +371,9 @@ describe Positionable do
       folders.each do |folder|
         document = folder.documents.last
         document.position.should == folder.documents.size - 1 # Meta!
-        document.down!
-        document.position.should == folder.documents.size - 1
+        lambda {
+          document.down!
+        }.should_not change(document, :position)
       end
     end
 
@@ -426,12 +428,12 @@ describe Positionable do
         position = document.position
         document.update_attributes( {:folder_id => new_folder.id} )
         document.position.should == position # Position unchanged
-        new_folder.reload.documents.should be_contiguous
+        new_folder.reload.documents.should be_contiguous.starting_at(0)
       end
 
       it "reorders records of previous scope" do
         document.update_attributes( {:folder_id => new_folder.id} )
-        old_folder.reload.documents.should be_contiguous
+        old_folder.reload.documents.should be_contiguous.starting_at(0)
       end
 
     end
@@ -571,7 +573,7 @@ describe Positionable do
 
       it "orders items by descending position" do
         items = FactoryGirl.create_list(:desc_item, 5)
-        DescItem.all.reverse.should be_contiguous
+        DescItem.all.reverse.should be_contiguous.starting_at(0)
       end
 
     end
