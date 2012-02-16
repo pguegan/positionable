@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Positionable::VERSION
   s.authors     = ["Philippe Guégan"]
   s.email       = ["philippe.guegan@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/pguegan/positionable"
   s.summary     = %q(A gem for positionning your ActiveRecord models.)
   s.description = %q(This extension provides contiguous positionning capabilities to you ActiveRecord models.)
 
