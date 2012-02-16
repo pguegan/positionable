@@ -10,7 +10,7 @@ For more functionalities, you could also have a look at acts_as_list[https://git
 
 Edit your Gemfile, and simply add the following line:
 
-  gem 'positionable', :git => "git://github.com/pguegan/positionable.git" 
+  gem 'positionable'
 
 == Getting Started
 
