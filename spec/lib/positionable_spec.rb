@@ -451,20 +451,28 @@ describe Positionable do
         it "gives the range within a scope" do
           folder = Factory.create(:folder_with_documents)
           document = Document.new
-          document.range(folder).should == (0..(folder.documents.count + 1))
+          document.range(folder).should == (0..folder.documents.count)
         end
 
         it "gives the range within its own scope by default" do
-          document = Factory.build(:document)
-          folder = document.folder
-          document.range.should == (0..(folder.documents.count + 1))
+          folder = Factory.create(:folder_with_documents)
+          document = folder.documents.sample
+          document.range.should == (0..(folder.documents.count - 1))
         end
 
         it "gives the range within another scope" do
           document = Factory.build(:document)
           folder = Factory.create(:folder_with_documents)
           document.folder.should_not == folder # Meta!
-          document.range(folder).should == (0..(folder.documents.count + 1))
+          document.range(folder).should == (0..folder.documents.count)
+        end
+
+        it "gives the range within another empty scope" do
+          document = Factory.build(:document)
+          folder = Factory.create(:folder)
+          document.folder.should_not == folder # Meta!
+          folder.documents.should be_empty # Meta!
+          document.range(folder).should == (0..0)
         end
 
       end
@@ -474,14 +482,14 @@ describe Positionable do
         it "gives the range within its own scope" do
           folder = Factory.create(:folder_with_documents)
           document = folder.documents.sample
-          document.range(folder).should == (0..folder.documents.count)
+          document.range(folder).should == (0..(folder.documents.count - 1))
         end
 
         it "gives the range within another scope" do
           document = Factory.create(:document)
           folder = Factory.create(:folder_with_documents)
           document.folder.should_not == folder # Meta!
-          document.range(folder).should == (0..(folder.documents.count + 1))
+          document.range(folder).should == (0..folder.documents.count)
         end
 
       end

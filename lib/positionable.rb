@@ -91,9 +91,9 @@ module Positionable
             count = self.class.where("#{scope_id_attr} = ?", target_scope_id).count
             # An additional position is available if this record is new, or if it's moved to another scope
             if new_record? or target_scope_id != scope_id
-              (start..(count + 1))
+              (start..(start + count))
             else
-              (start..count)
+              (start..(start + count - 1))
             end
           end
 
