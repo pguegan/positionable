@@ -15,6 +15,9 @@ class DefaultItem < Item
   is_positionable
 end
 
+class SubItem < DefaultItem
+end
+
 class StartingAtOneItem < Item
   is_positionable :start => 1
 end
