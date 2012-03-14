@@ -34,7 +34,7 @@ describe Positionable do
     context "inheritance" do
 
       it "extends positionable sub-models" do
-        item = SubItem.new
+        item = SubItem1.new
         item.respond_to?(:previous).should be_true
         item.respond_to?(:next).should be_true
         item.respond_to?(:position=).should be_true
@@ -162,6 +162,16 @@ describe Positionable do
       previous.reload.position.should == position - 1
       middle.position.should == position + 1
       neXt.reload.position.should == position
+    end
+
+    context "inheritance" do
+
+      it "inserts contiguously records of all subclasses" do
+        Factory.create(:sub_item_1).position.should == items.count
+        Factory.create(:sub_item_2).position.should == items.count + 1
+        Factory.create(:sub_item_1).position.should == items.count + 2
+      end
+
     end
 
     describe "moving" do

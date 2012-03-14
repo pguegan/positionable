@@ -19,6 +19,14 @@ FactoryGirl.define do
   	sequence(:title) { |n| "Default Item #{n}" }
   end
 
+  factory :sub_item_1 do
+    sequence(:title) { |n| "Sub-Item-1 #{n}" }
+  end
+
+  factory :sub_item_2 do
+    sequence(:title) { |n| "Sub-Item-2 #{n}" }
+  end
+
   factory :starting_at_one_item do
     sequence(:title) { |n| "Starting At One Item #{n}" }
   end

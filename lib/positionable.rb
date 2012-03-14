@@ -244,7 +244,8 @@ module Positionable
 
       # All the records that belong to same scope (if any) of this record (including itself).
       def scoped_all
-        self.class.where(scoped_condition)
+        # The range is shared among all subclasses of the base class, which directly extends ActiveRecord::Base
+        self.class.base_class.where(scoped_condition)
       end
 
       # Reorders records between provided positions, unless the destination position is out of range.

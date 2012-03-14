@@ -15,7 +15,10 @@ class DefaultItem < Item
   is_positionable
 end
 
-class SubItem < DefaultItem
+class SubItem1 < DefaultItem
+end
+
+class SubItem2 < DefaultItem
 end
 
 class StartingAtOneItem < Item
