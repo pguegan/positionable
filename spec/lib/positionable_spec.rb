@@ -28,7 +28,7 @@ describe Positionable do
     it "prepends the table name in SQL 'order by' clause" do
       sql = DefaultItem.where("1 = 1").to_sql
       table = DefaultItem.table_name
-      sql.should include("ORDER BY \"#{table}\".\"position\"")
+      sql.should include("ORDER BY `#{table}`.`position`")
     end
 
     context "inheritance" do
@@ -49,7 +49,7 @@ describe Positionable do
     it "orders records by their position by default" do
       shuffle_positions = (0..9).to_a.shuffle
       shuffle_positions.each do |position|
-        item = Factory.create(:default_item)
+        item = FactoryGirl.create(:default_item)
         item.update_column(:position, position)
       end
       DefaultItem.all.should be_contiguous.starting_at(0)
@@ -67,7 +67,7 @@ describe Positionable do
     end
 
     it "increments position by one after creation" do
-      item = Factory.create(:default_item)
+      item = FactoryGirl.create(:default_item)
       item.position.should == items.last.position + 1
     end
 
@@ -167,9 +167,9 @@ describe Positionable do
     context "inheritance" do
 
       it "inserts contiguously records of all subclasses" do
-        Factory.create(:sub_item_1).position.should == items.count
-        Factory.create(:sub_item_2).position.should == items.count + 1
-        Factory.create(:sub_item_1).position.should == items.count + 2
+        FactoryGirl.create(:sub_item_1).position.should == items.count
+        FactoryGirl.create(:sub_item_2).position.should == items.count + 1
+        FactoryGirl.create(:sub_item_1).position.should == items.count + 2
       end
 
     end
@@ -259,7 +259,7 @@ describe Positionable do
     let!(:items) { FactoryGirl.create_list(:default_item, 10) }
 
     it "gives the range position of a new record" do
-      item = Factory.build(:default_item)
+      item = FactoryGirl.build(:default_item)
       item.range.should == (0..items.count)
     end
 
@@ -294,7 +294,7 @@ describe Positionable do
     it "increments position by one after creation inside a folder" do
       folders.each do |folder|
         last_position = folder.documents.last.position
-        document = Factory.create(:document, :folder => folder)
+        document = FactoryGirl.create(:document, :folder => folder)
         document.position.should == last_position + 1
       end
     end
@@ -438,7 +438,7 @@ describe Positionable do
       # Last document is a special case when changing scope, so it is avoided
       let!(:document) { old_folder.documents.but_last.sample }
       # A new folder containing a different count of documents than the old folder
-      let!(:new_folder) { Factory.create(:folder) }
+      let!(:new_folder) { FactoryGirl.create(:folder) }
       let!(:new_documents) { FactoryGirl.create_list(:document, old_folder.documents.count + 1, :folder => new_folder) }
 
       it "moves to bottom position when scope has changed but position is out of range" do
@@ -472,27 +472,27 @@ describe Positionable do
         end
 
         it "gives the range within a scope" do
-          folder = Factory.create(:folder_with_documents)
+          folder = FactoryGirl.create(:folder_with_documents)
           document = Document.new
           document.range(folder).should == (0..folder.documents.count)
         end
 
         it "gives the range within its own scope by default" do
-          folder = Factory.create(:folder_with_documents)
+          folder = FactoryGirl.create(:folder_with_documents)
           document = folder.documents.sample
           document.range.should == (0..(folder.documents.count - 1))
         end
 
         it "gives the range within another scope" do
-          document = Factory.build(:document)
-          folder = Factory.create(:folder_with_documents)
+          document = FactoryGirl.build(:document)
+          folder = FactoryGirl.create(:folder_with_documents)
           document.folder.should_not == folder # Meta!
           document.range(folder).should == (0..folder.documents.count)
         end
 
         it "gives the range within another empty scope" do
-          document = Factory.build(:document)
-          folder = Factory.create(:folder)
+          document = FactoryGirl.build(:document)
+          folder = FactoryGirl.create(:folder)
           document.folder.should_not == folder # Meta!
           folder.documents.should be_empty # Meta!
           document.range(folder).should == (0..0)
@@ -503,14 +503,14 @@ describe Positionable do
       context "existing record" do
 
         it "gives the range within its own scope" do
-          folder = Factory.create(:folder_with_documents)
+          folder = FactoryGirl.create(:folder_with_documents)
           document = folder.documents.sample
           document.range(folder).should == (0..(folder.documents.count - 1))
         end
 
         it "gives the range within another scope" do
-          document = Factory.create(:document)
-          folder = Factory.create(:folder_with_documents)
+          document = FactoryGirl.create(:document)
+          folder = FactoryGirl.create(:folder_with_documents)
           document.folder.should_not == folder # Meta!
           document.range(folder).should == (0..folder.documents.count)
         end
@@ -526,13 +526,13 @@ describe Positionable do
     let(:start) { 1 }
 
     it "starts at the given position" do
-      item = Factory.create(:starting_at_one_item)
+      item = FactoryGirl.create(:starting_at_one_item)
       item.position.should == start
     end
 
     it "increments by one the given start position" do
       items = FactoryGirl.create_list(:starting_at_one_item, 5)
-      item = Factory.create(:starting_at_one_item)
+      item = FactoryGirl.create(:starting_at_one_item)
       item.position.should == items.size + start
     end
 
@@ -581,7 +581,7 @@ describe Positionable do
 
       it "appends at the last position" do
         items = FactoryGirl.create_list(:asc_item, 5)
-        item = Factory.create(:asc_item)
+        item = FactoryGirl.create(:asc_item)
         item.position.should == items.size
       end
 
@@ -598,7 +598,7 @@ describe Positionable do
 
       it "appends at the last position" do
         items = FactoryGirl.create_list(:desc_item, 5)
-        item = Factory.create(:desc_item)
+        item = FactoryGirl.create(:desc_item)
         item.position.should == items.size
       end
 
