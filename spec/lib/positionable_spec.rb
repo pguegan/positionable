@@ -106,17 +106,17 @@ describe Positionable do
     end
 
     it "caracterizes the first record" do
-      items.first.first?.should be_true
+      items.first.should be_first
       items.but_first.each do |item|
-        item.first?.should be_false
+        item.should_not be_first
       end
     end
 
     it "caracterizes the last record" do
       items.but_last.each do |item|
-        item.last?.should be_false
+        item.should_not be_last
       end
-      items.last.last?.should be_true
+      items.last.should be_last
     end
 
     it "decrements positions of next sibblings after deletion" do
@@ -353,9 +353,9 @@ describe Positionable do
     it "caracterizes the first record of the folder" do
       folders.each do |folder|
         documents = folder.documents
-        documents.first.first?.should be_true
+        documents.first.should be_first
         documents.but_first.each do |document|
-          document.first?.should be_false
+          document.should_not be_first
         end
       end
     end
@@ -364,9 +364,9 @@ describe Positionable do
       folders.each do |folder|
         documents = folder.documents
         documents.but_last.each do |document|
-          document.last?.should be_false
+          document.should_not be_last
         end
-        documents.last.last?.should be_true
+        documents.last.should be_last
       end
     end
 
@@ -444,13 +444,17 @@ describe Positionable do
       it "moves to bottom position when scope has changed but position is out of range" do
         document.update_attributes( {:folder_id => new_folder.id, :position => new_documents.count + 10 } )
         document.position.should == new_folder.documents.count - 1
-        document.last?.should be_true
+        document.should be_last
       end
 
       it "keeps position when scope has changed but position belongs to range" do
-        position = document.position
+        lambda {
+          document.update_attributes( {:folder_id => new_folder.id} )
+        }.should_not change(document, :position)
+      end
+
+      it "keeps contiguity of target scope" do
         document.update_attributes( {:folder_id => new_folder.id} )
-        document.position.should == position # Position unchanged
         new_folder.reload.documents.should be_contiguous.starting_at(0)
       end
 
@@ -538,25 +542,24 @@ describe Positionable do
 
     it "caracterizes the first record according the start position" do
       items = create_list(:starting_at_one_item, 5)
-      items.first.first?.should be_true
+      items.first.should be_first
       items.but_first.each do |item|
-        item.first?.should be_false
+        item.should_not be_first
       end
     end
 
     it "caracterizes the last record according the start position" do
       items = create_list(:starting_at_one_item, 5)
       items.but_last.each do |item|
-        item.last?.should be_false
+        item.should_not be_last
       end
-      items.last.last?.should be_true
+      items.last.should be_last
     end
 
     describe "moving" do
 
       it "does not move anything if new position is before start position" do
-        items = create_list(:starting_at_one_item, 5)
-        item = items.sample
+        item = create_list(:starting_at_one_item, 5).sample
         lambda {
           item.move_to start - 1
         }.should_not change(item, :position)
@@ -603,7 +606,7 @@ describe Positionable do
       end
 
       it "orders items by descending position" do
-        items = create_list(:desc_item, 5)
+        create_list(:desc_item, 5)
         DescItem.all.reverse.should be_contiguous.starting_at(0)
       end
 
@@ -619,7 +622,6 @@ describe Positionable do
     it "manages complex items" do
       # All options are tested here (grouping, descending ordering and start position at 1)
       groups.each do |group|
-        size = group.complex_items.size
         group.complex_items.reverse.should be_contiguous.starting_at(start)
       end
     end
