@@ -22,6 +22,7 @@ RSpec::Matchers.define :be_contiguous do
     end
     message << " would be contiguous"
     message << " (starting at #{@start})" if @start > 0
+    message
   end
 
 end

@@ -453,7 +453,7 @@ describe Positionable do
         }.should_not change(document, :position)
       end
 
-      it "keeps contiguity of target scope" do
+      it "reorders records of target scope" do
         document.update_attributes( {:folder_id => new_folder.id} )
         new_folder.reload.documents.should be_contiguous.starting_at(0)
       end

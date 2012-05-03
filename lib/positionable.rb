@@ -251,19 +251,15 @@ module Positionable
       # Reorders records between provided positions, unless the destination position is out of range.
       def reorder(from, to)
         if to > from
-          shift, siblings = -1, ((from + 1)..to).map { |p| at(p) }
+          shift, positions_range = -1, ((from + 1)..to)
         elsif scope_changed?
           # When scope changes, it actually inserts this record in the new scope
           # All next siblings (from new position to bottom) have to be staggered
-          shift, siblings = 1, (to..bottom).map { |p| at(p) }
+          shift, positions_range = 1, (to..bottom)
         else
-          shift, siblings = 1, (to..(from - 1)).map { |p| at(p) }
+          shift, positions_range = 1, (to..(from - 1))
         end
-        self.class.transaction do
-          siblings.map do |sibling|
-            sibling.update_column(:position, sibling.position + shift)
-          end
-        end
+        scoped_all.where(position: positions_range).update_all(['position = position + ?', shift])
       end
 
       # Reorders records between old and new position (and old and new scope).
@@ -296,11 +292,7 @@ module Positionable
 
       # Decrements the position of all the provided records.
       def decrement(records)
-        self.class.transaction do
-          records.each do |record|
-            record.update_column(:position, record.position - 1)
-          end
-        end
+        records.update_all(['position = position - 1'])
       end
 
     end
