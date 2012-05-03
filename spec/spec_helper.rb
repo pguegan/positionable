@@ -5,6 +5,7 @@ end
 
 require 'factory_girl'
 FactoryGirl.find_definitions
+include FactoryGirl::Syntax::Methods
 
 require 'positionable'
 
