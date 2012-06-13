@@ -100,7 +100,11 @@ module Positionable
         private
 
           def scoped_condition
-            "#{scope_id_attr} = " + scope_id.to_s
+            if scope_id.nil?
+              "#{scope_id_attr} is null"
+            else
+              "#{scope_id_attr} = " + scope_id.to_s
+            end
           end
 
           def scoped_position

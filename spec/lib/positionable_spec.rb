@@ -432,6 +432,16 @@ describe Positionable do
       end
     end
 
+    context "missing scope reference" do
+
+      it "supports nil scope reference" do
+        create(:document, folder: nil).position.should == 0
+        create(:document, folder: nil).position.should == 1
+        create(:document, folder: nil).position.should == 2
+      end
+
+    end
+
     context "changing scope" do
 
       let!(:old_folder) { folders.first }

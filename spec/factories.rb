@@ -4,7 +4,7 @@ FactoryGirl.define do
   	sequence(:title) { |n| "Folder #{n}" }
 
     factory :folder_with_documents do
-      after_create do |folder|
+      after(:create) do |folder|
         folder.documents = FactoryGirl.create_list(:document, 5, :folder => folder)
       end
     end
@@ -43,7 +43,7 @@ FactoryGirl.define do
     sequence(:title) { |n| "Group #{n}" }
 
     factory :group_with_complex_items do
-      after_create do |group|
+      after(:create) do |group|
         group.complex_items = FactoryGirl.create_list(:complex_item, 5, :group => group)
       end
     end
