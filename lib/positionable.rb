@@ -124,7 +124,11 @@ module Positionable
           end
 
           def scoped_condition_was
-            "#{scope_id_attr} = " + scope_id_was.to_s
+            if scope_id_was.nil?
+              "#{scope_id_attr} IS NULL"
+            else
+              "#{scope_id_attr} = " + scope_id_was.to_s
+            end
           end
 
           def scoped_position_was
