@@ -1,3 +1,3 @@
 module Positionable
-  VERSION = "1.0.8.1"
+  VERSION = "1.0.8.2"
 end
