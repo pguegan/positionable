@@ -88,7 +88,11 @@ module Positionable
             # Does its best to retrieve the target scope...
             target_scope_id = scope.nil? ? scope_id : scope.id
             # Number of records whithin the target scope
-            count = self.class.where("#{scope_id_attr} = ?", target_scope_id).count
+            count = if target_scope_id.nil?
+              self.class.where("#{scope_id_attr} IS NULL").count
+            else
+              self.class.where("#{scope_id_attr} = ?", target_scope_id).count
+            end
             # An additional position is available if this record is new, or if it's moved to another scope
             if new_record? or target_scope_id != scope_id
               (start..(start + count))
