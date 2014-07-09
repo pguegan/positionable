@@ -13,16 +13,16 @@ describe Positionable do
 
     it "does not extend non positionable models" do
       dummy = Dummy.new
-      dummy.respond_to?(:previous).should be_false
-      dummy.respond_to?(:next).should be_false
-      dummy.respond_to?(:position=).should be_false
+      expect(dummy.respond_to?(:previous)).to eq(false)
+      expect(dummy.respond_to?(:next)).to eq(false)
+      expect(dummy.respond_to?(:position=)).to eq(false)
     end
 
     it "extends positionable models" do
       item = DefaultItem.new
-      item.respond_to?(:previous).should be_true
-      item.respond_to?(:next).should be_true
-      item.respond_to?(:position=).should be_true
+      expect(item.respond_to?(:previous)).to eq(true)
+      expect(item.respond_to?(:next)).to eq(true)
+      expect(item.respond_to?(:position=)).to eq(true)
     end
 
     it "prepends the table name in SQL 'order by' clause" do
@@ -35,9 +35,9 @@ describe Positionable do
 
       it "extends positionable sub-models" do
         item = SubItem1.new
-        item.respond_to?(:previous).should be_true
-        item.respond_to?(:next).should be_true
-        item.respond_to?(:position=).should be_true
+        expect(item.respond_to?(:previous)).to eq(true)
+        expect(item.respond_to?(:next)).to eq(true)
+        expect(item.respond_to?(:position=)).to eq(true)
       end
 
     end
