@@ -25,12 +25,6 @@ describe Positionable do
       expect(item.respond_to?(:position=)).to eq(true)
     end
 
-    it "prepends the table name in SQL 'order by' clause" do
-      sql = DefaultItem.where("1 = 1").to_sql
-      table = DefaultItem.table_name
-      sql.should include("ORDER BY \"#{table}\".\"position\"")
-    end
-
     context "inheritance" do
 
       it "extends positionable sub-models" do
