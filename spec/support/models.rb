@@ -43,3 +43,7 @@ end
 
 class Dummy < ActiveRecord::Base
 end
+
+class SkipUpdateItem < ActiveRecord::Base
+  is_positionable :skip => :update
+end

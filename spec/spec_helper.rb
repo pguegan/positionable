@@ -3,6 +3,8 @@ SimpleCov.start do
   add_filter "/spec/support/"
 end
 
+require 'byebug'
+
 require 'factory_girl'
 FactoryGirl.find_definitions
 include FactoryGirl::Syntax::Methods
@@ -14,6 +16,11 @@ ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => File
 load File.dirname(__FILE__) + '/support/schema.rb'
 load File.dirname(__FILE__) + '/support/models.rb'
 load File.dirname(__FILE__) + '/support/matchers/contiguity_matcher.rb'
+
+RSpec.configure do |config|
+  config.filter_run focus: true
+  config.run_all_when_everything_filtered = true
+end
 
 class Array
 

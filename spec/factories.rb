@@ -58,4 +58,8 @@ FactoryGirl.define do
     sequence(:title) { |n| "Stuff #{n}" }
   end
 
+  factory :skip_update_item do
+    sequence(:title) { |n| "Skip Update Item #{n}" }
+  end
+
 end

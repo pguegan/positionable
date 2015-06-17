@@ -9,7 +9,7 @@ require 'active_record'
 # to be <em>contiguous</em>, ie.: there is no 'hole' between two adjacent positions.
 #
 # Positionable has a strong management of records that belong to a group (a.k.a. scope). When a
-# record is moved whithin its scope, or from a scope to another, other impacted records are 
+# record is moved whithin its scope, or from a scope to another, other impacted records are
 # also reordered accordingly.
 #
 # You can use the provided instance methods (<tt>up!</tt>, <tt>down!</tt> or <tt>move_to</tt>)
@@ -29,12 +29,12 @@ module Positionable
   module PositionableMethods
 
     # Makes this model positionable.
-    # 
+    #
     #   class Item < ActiveRecord::Base
     #     is_positionable
     #   end
     #
-    # Maybe your items are grouped (typically with a +belongs_to+ association). In this case, 
+    # Maybe your items are grouped (typically with a +belongs_to+ association). In this case,
     # you'll want to restrict the position in each group by declaring the +:scope+ option:
     #
     #   class Folder < ActiveRecord::Base
@@ -48,7 +48,7 @@ module Positionable
     #
     # By default, position starts by zero. But you may want to change this at the model level,
     # for instance by starting at one (which seems more natural for some people):
-    # 
+    #
     #   class Item < ActiveRecord::Base
     #     is_positionable :start => 1
     #   end
@@ -69,7 +69,7 @@ module Positionable
       default_scope { order("#{ActiveRecord::Base.connection.quote_table_name self.table_name}.#{ActiveRecord::Base.connection.quote_column_name 'position'} #{order}") }
 
       before_create :add_to_bottom
-      before_update :update_position
+      before_update :update_position unless options[:skip] == :update
       after_destroy :decrement_all_next
 
       if scope_id_attr
@@ -89,9 +89,9 @@ module Positionable
             target_scope_id = scope.nil? ? scope_id : scope.id
             # Number of records whithin the target scope
             count = if target_scope_id.nil?
-              self.class.where("#{scope_id_attr} IS NULL").count
+              self.class.base_class.where("#{scope_id_attr} IS NULL").count
             else
-              self.class.where("#{scope_id_attr} = ?", target_scope_id).count
+              self.class.base_class.where("#{scope_id_attr} = ?", target_scope_id).count
             end
             # An additional position is available if this record is new, or if it's moved to another scope
             if new_record? or target_scope_id != scope_id
@@ -212,13 +212,13 @@ module Positionable
       # are ordered by their respective positions, depending on the <tt>order</tt> option
       # provided to <tt>is_positionable</tt>.
       def all_next
-        self.class.where("#{scoped_position} > ?", position)
+        self.class.base_class.where("#{scoped_position} > ?", position)
       end
 
-      # All the next records <em>of the old scope</em>, whose positions are greater 
+      # All the next records <em>of the old scope</em>, whose positions are greater
       # than this record before it was moved from its old record.
       def all_next_was
-        self.class.where("#{scoped_position_was} > ?", position_was)
+        self.class.base_class.where("#{scoped_position_was} > ?", position_was)
       end
 
       # Gives the next sibling record, whose position is right before this record.
@@ -230,7 +230,7 @@ module Positionable
       # are ordered by their respective positions, depending on the <tt>order</tt> option
       # provided to <tt>is_positionable</tt> (ascending by default).
       def all_previous
-        self.class.where("#{scoped_position} < ?", position)
+        self.class.base_class.where("#{scoped_position} < ?", position)
       end
 
     private
@@ -242,12 +242,12 @@ module Positionable
 
       # Finds the record at the given position.
       def at(position)
-        self.class.where("#{scoped_position} = ?", position).limit(1).first
+        self.class.base_class.where("#{scoped_position} = ?", position).limit(1).first
       end
 
       # Swaps this record's position with the other provided record.
       def swap_with(other)
-        self.class.transaction do
+        self.class.base_class.transaction do
           old_position = position
           update_attribute(:position, other.position)
           other.update_attribute(:position, old_position)

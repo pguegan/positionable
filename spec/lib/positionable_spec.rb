@@ -171,7 +171,7 @@ describe Positionable do
     describe "moving" do
 
       context "mass-assignement" do
-        
+
         it "reorders records when position is updated" do
           old_position = middle.position
           new_position = old_position + 3
@@ -197,7 +197,7 @@ describe Positionable do
           middle.update_attributes({ :position => -1 })
           items.should be_contiguous.starting_at(0)
         end
-      
+
       end
 
       it "also moves the previous records when moving to a lower position" do
@@ -407,7 +407,7 @@ describe Positionable do
         previous.reload.position.should == position
         middle.position.should == position - 1
         neXt.reload.position.should == position + 1
-      end     
+      end
     end
 
     it "reorders the records positions after downing" do
@@ -446,24 +446,24 @@ describe Positionable do
       let!(:new_documents) { create_list(:document, old_folder.documents.count + 1, :folder => new_folder) }
 
       it "moves to bottom position when scope has changed but position is out of range" do
-        document.update_attributes( {:folder_id => new_folder.id, :position => new_documents.count + 10 } )
+        document.update_attributes( {:folder => new_folder, :position => new_documents.count + 10 } )
         document.position.should == new_folder.documents.count - 1
         document.should be_last
       end
 
       it "keeps position when scope has changed but position belongs to range" do
         lambda {
-          document.update_attributes( {:folder_id => new_folder.id} )
+          document.update_attributes( {:folder => new_folder} )
         }.should_not change(document, :position)
       end
 
       it "reorders records of target scope" do
-        document.update_attributes( {:folder_id => new_folder.id} )
+        document.update_attributes( {:folder => new_folder} )
         new_folder.reload.documents.should be_contiguous.starting_at(0)
       end
 
       it "reorders records of previous scope" do
-        document.update_attributes( {:folder_id => new_folder.id} )
+        document.update_attributes( {:folder => new_folder} )
         old_folder.reload.documents.should be_contiguous.starting_at(0)
       end
 
@@ -628,6 +628,20 @@ describe Positionable do
       groups.each do |group|
         group.complex_items.reverse.should be_contiguous.starting_at(start)
       end
+    end
+
+  end
+
+  context "skip update" do
+
+    let(:items) { create_list(:skip_update_item, 5) }
+    let(:item) { items[2] }
+
+    it "does not update sibbling positions" do
+      item.position.should == 2 # Meta!
+      item.update(position: 1)
+      item.position.should == 1 # Meta!
+      SkipUpdateItem.all.map(&:position).should == [0, 1, 1, 3, 4]
     end
 
   end
